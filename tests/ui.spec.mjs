@@ -504,3 +504,17 @@ test('a word winter keeps lies withered in the thaw garden', async ({ page }) =>
   await expect(jardin.locator('.final-flor')).toHaveCount(0);
   await expect(jardin).toHaveAttribute('aria-label', /winter keeps «lantern»/);
 });
+
+test('watering a bed lets a drop fall where you clicked', async ({ page }) => {
+  await beginWithSeed(page, 'lantern');
+  const bed = page.locator('#camas > .cama').first();
+  await bed.click(); // plant lantern
+  await expect(bed.locator('.gota-cayendo')).toHaveCount(0); // planting drops nothing
+  await page.click('[data-modo="regar"]');
+  await bed.click();
+  await expect(bed.locator('.gota-cayendo')).toHaveCount(1); // the drop falls
+  await expect(bed.locator('.gota-cayendo')).toHaveCount(0, { timeout: 3000 }); // and is gone
+  await bed.click(); // already watered: nothing spent, nothing falls
+  await expect(page.locator('#guia')).toContainText('already have water');
+  await expect(bed.locator('.gota-cayendo')).toHaveCount(0);
+});
