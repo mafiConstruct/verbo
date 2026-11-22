@@ -237,6 +237,11 @@
     state.actions = ACTIONS_PER_DAY;
     state.forecast = rollFrost(state);
 
+    // the last night: planting or grafting now can never bloom,
+    // so say so before the player spends their final actions on it
+    if (state.day === DAYS && aliveCount(state) > 0)
+      say(state, 'the last night. new seeds would not have time to bloom; tend what is already growing.');
+
     if (aliveCount(state) === 0 || state.day > DAYS) finish(state);
     return state;
   }
