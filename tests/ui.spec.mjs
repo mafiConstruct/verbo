@@ -79,25 +79,23 @@ test('two grown words graft into a new word in the pouch', async ({ page }) => {
   await begin(page, 'seed-graft2'); // engine-verified: mature pair on day 3
   // policy proven against the engine: keep 2 beds planted, water everything
   for (let night = 0; night < 14; night++) {
+    // graftable = living plant at stem stage or beyond (aria stage names)
     const glowGraftable = await page.locator('#camas > .cama').evaluateAll(
-      els => els.filter(el => {
-        const pre = el.querySelector('.planta');
-        return pre && (pre.textContent.split('\n')[2] || '').includes("'");
-      }).length
+      els => els.filter(el => /, (stem|bud),/.test(el.getAttribute('aria-label') || '')).length
     );
     if (glowGraftable >= 2) break;
     // plant up to two (matches the engine-proven schedule: both in on day 1)
     for (let k = 0; k < 2; k++) {
-      const plants = await page.locator('#camas > .cama:has(.planta)').count();
-      const empty = await page.locator('#camas > .cama:not(:has(.planta))').count();
+      const plants = await page.locator('#camas > .cama:has(.planta:not(.eco))').count();
+      const empty = await page.locator('#camas > .cama:not(:has(.planta:not(.eco)))').count();
       const seeds = await page.locator('#semillas > .semilla').count();
       const actions = await page.locator('#acciones-restantes').textContent();
       if (plants < 2 && empty > 0 && seeds > 0 && !actions.startsWith('○')) {
-        await page.locator('#camas > .cama:not(:has(.planta))').first().click();
+        await page.locator('#camas > .cama:not(:has(.planta:not(.eco)))').first().click();
       }
     }
     // water every unwatered plant (≈ mark absent in .estado)
-    for (const bed of await page.locator('#camas > .cama:has(.planta)').all()) {
+    for (const bed of await page.locator('#camas > .cama:has(.planta:not(.eco))').all()) {
       if (!/≈/.test(await bed.locator('.estado').textContent())) {
         await page.click('button[data-modo="regar"]');
         await bed.click();
@@ -473,4 +471,36 @@ test('a word the frost takes keeps its withered stem on the bed that night', asy
   await bed.click();
   await expect(bed).toHaveAttribute('aria-label', /crow, seed/);
   await expect(bed.locator('svg.planta.marchita')).toHaveCount(0);
+});
+
+test('a bloomed word stands in flower in the thaw garden', async ({ page }) => {
+  await beginWithSeed(page, 'lantern', false, 12);
+  const bed = page.locator('#camas > .cama').first();
+  await bed.click(); // plant lantern
+  for (let n = 0; n < 3; n++) {
+    await page.click('[data-modo="regar"]');
+    await bed.click();
+    await page.click('[data-modo="luz"]');
+    await bed.click();
+    await page.click('#noche');
+  }
+  await expect(page.locator('#pantalla-final')).toBeVisible();
+  const jardin = page.locator('#final-jardin');
+  await expect(jardin.locator('.final-flor')).toHaveCount(1);
+  await expect(jardin.locator('.final-flor')).toContainText('lantern');
+  await expect(jardin.locator('.final-marchita')).toHaveCount(0);
+  await expect(jardin).toHaveAttribute('aria-label', /the garden the thaw found: «lantern»/);
+});
+
+test('a word winter keeps lies withered in the thaw garden', async ({ page }) => {
+  await begin(page, 'seed-2xk5l0');
+  await page.locator('#camas > .cama').first().click(); // plant lantern, then neglect it
+  for (let n = 0; n < 14; n++) await page.click('#noche');
+  await expect(page.locator('#pantalla-final')).toBeVisible();
+  await expect(page.locator('#final-titulo')).toHaveText('Silence');
+  const jardin = page.locator('#final-jardin');
+  await expect(jardin.locator('.final-marchita')).toHaveCount(1);
+  await expect(jardin.locator('.final-marchita')).toContainText('lantern');
+  await expect(jardin.locator('.final-flor')).toHaveCount(0);
+  await expect(jardin).toHaveAttribute('aria-label', /winter keeps «lantern»/);
 });
