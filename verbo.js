@@ -113,7 +113,7 @@
     return state;
   }
 
-  function say(state, msg) { state.log.push('Day ' + state.day + ' — ' + msg); }
+  function say(state, msg) { state.log.push('Night ' + state.day + ' — ' + msg); }
 
   function stageCost(t) { return Math.min(3, Math.max(1, t.growth - 2)); }
 
