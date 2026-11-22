@@ -105,6 +105,7 @@
       code, rng, day: 1, actions: ACTIONS_PER_DAY,
       beds: new Array(BEDS).fill(null),
       pouch, poem: [], grafts: 0, bloomed: 0, vigorous: {}, lost: [], bornThemes: {},
+      scarred: {}, parents: {},
       log: [], over: false, ending: null,
       windStock: lex.concat(RARE.filter(w => !pouch.includes(w))),
     };
@@ -151,6 +152,7 @@
     state.beds[bedA] = null; state.beds[bedB] = null;
     state.pouch.push(w);
     state.vigorous[w] = true;
+    state.parents[w] = [A.word, B.word];
     state.bornThemes[w] = themeOf(A.word, state); // a born word keeps its first parent's theme
     state.grafts++;
     state.actions -= 2;
@@ -190,7 +192,7 @@
         let dmg = base;
         if (th === 'night') dmg = Math.max(0, dmg - 1);
         else if (th === 'flame') dmg += 1;
-        if (dmg > 0) { p.health -= dmg; say(state, 'the frost hit «' + p.word + '» (−' + dmg + ').'); }
+        if (dmg > 0) { p.health -= dmg; say(state, 'the frost hit «' + p.word + '» (−' + dmg + ').'); if (p.health > 0) state.scarred[p.word] = true; }
         else if (th === 'night' && base > 0) say(state, '«' + p.word + '» is at home in the frost.');
       }
       // death
@@ -261,7 +263,12 @@
     // one line per word at most: a repeated bloom feeds the count, not the verse
     const kept = [];
     for (const w of state.poem) if (!kept.includes(w)) kept.push(w);
-    const words = kept.slice(0, 9);
+    // the poem remembers what happened: a word that took frost and lived
+    // gets its own verse, and a born word arrives with its parents' names.
+    // Those words leave the enumeration below.
+    const hero = kept.find(w => state.scarred[w]);
+    const bornChild = kept.find(w => state.parents[w]);
+    const words = kept.filter(w => w !== hero && w !== bornChild).slice(0, 9);
     // verses group words that are ABOUT the same thing: one theme per verse,
     // biggest theme first; a verse holds at most 3 words and 16 letters,
     // short words lead to long; a born word closes its verse.
@@ -296,8 +303,10 @@
       return ws.filter(w => !state.vigorous[w]).concat(ws.filter(w => state.vigorous[w])).join(', ');
     };
     const lines = themed.map(bornLast).concat(rares);
+    if (hero) lines.push('«' + hero + '» stood in the frost.');
+    if (bornChild) lines.push('«' + bornChild + '», child of «' + state.parents[bornChild][0] + '» and «' + state.parents[bornChild][1] + '».');
+    else if (words.some(w => state.vigorous[w])) lines.push('one of these words was never heard before.');
     lines.push(CLOSERS[dominantFamily(state.poem)]);
-    if (words.some(w => state.vigorous[w])) lines.push('one of these words was never heard before.');
     if (lostNames.length) lines.push(winterKeeps(lostNames));
     return lines;
   }
