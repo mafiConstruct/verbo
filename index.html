@@ -60,6 +60,8 @@
   #bolsa .semilla.elegida { border-color: var(--bright); color: var(--bright); }
   #bolsa .semilla.vigorosa { border-style: double; border-color: var(--amber); }
   #pista { font-size: 12px; color: var(--dim); min-height: 30px; }
+  #guia { font-size: 13px; color: var(--txt); line-height: 1.45; margin-bottom: 10px; padding-left: 8px; border-left: 2px solid var(--dim); }
+  .como { text-align: left; font-size: 13px; line-height: 1.5; color: var(--txt); margin: 14px 0; }
   #pista b { color: var(--txt); font-weight: normal; }
 
   #acciones { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -68,7 +70,7 @@
     border-radius: 3px; padding: 6px 10px; font: inherit; font-size: 13px; cursor: pointer;
   }
   button:hover:not(:disabled) { border-color: var(--dim); color: var(--bright); }
-  button.activo { border-color: var(--bright); color: var(--bright); }
+  button.activo { border-color: var(--bright); color: #0a1408; background: var(--bright); font-weight: bold; }
   button:disabled { opacity: 0.35; cursor: default; }
   #noche { border-color: var(--water); color: var(--water); }
   #noche:hover:not(:disabled) { border-color: #bfe6ee; color: #bfe6ee; }
@@ -126,6 +128,7 @@
       </div>
       <div class="caja">
         <h3>actions</h3>
+        <div id="guia"></div>
         <div id="acciones">
           <button data-modo="plantar">plant</button>
           <button data-modo="regar">water</button>
@@ -152,6 +155,11 @@
       The vault holds the last words.<br>
       Tend them: they are the only thing that grows here.
     </p>
+    <div class="como">
+      <p><b>1.</b> Click a glowing garden bed to plant the selected word — or pick another in your pouch first.</p>
+      <p><b>2.</b> Water what you want to grow; light makes it faster. When frost is forecast, shelter your words or they take damage.</p>
+      <p><b>3.</b> After 14 nights, every word that bloomed becomes your poem.</p>
+    </div>
     <div class="fila">
       <input id="entrada-siembra" placeholder="seed code (optional)">
       <button id="comenzar">begin</button>
@@ -194,7 +202,7 @@
 
   function empezar(codigo) {
     g = V.newGame(codigo);
-    modo = 'plantar'; semillaElegida = null; injertoSel = [];
+    modo = 'plantar'; semillaElegida = g.pouch[0] || null; injertoSel = [];
     logPrevio = 0;
     $('pantalla-inicio').classList.add('escondido');
     $('pantalla-final').classList.add('escondido');
@@ -218,7 +226,7 @@
     camasEl.innerHTML = '';
     g.beds.forEach((p, i) => {
       const d = document.createElement('div');
-      d.className = 'cama' + (injertoSel.includes(i) ? ' seleccionada' : '');
+      d.className = 'cama' + (injertoSel.includes(i) ? ' seleccionada' : '') + (esObjetivo(p) ? ' objetivo' : '');
       if (p) {
         const pre = document.createElement('div');
         pre.className = 'planta';
@@ -255,7 +263,7 @@
       const s = document.createElement('span');
       s.className = 'semilla fam-' + V.familyOf(w) + (w === semillaElegida ? ' elegida' : '') + (g.vigorous[w] ? ' vigorosa' : '');
       s.textContent = w;
-      s.onclick = () => { semillaElegida = w; pista(w); render(); };
+      s.onclick = () => { semillaElegida = w; modo = 'plantar'; pista(w); render(); };
       semillasEl.append(s);
     });
 
@@ -267,6 +275,7 @@
         (m === 'plantar' && !g.pouch.length);
     });
     $('noche').disabled = g.over;
+    consejo();
 
     // log
     registroEl.innerHTML = '';
@@ -285,6 +294,46 @@
     if (g.over) mostrarFinal();
   }
 
+  function esObjetivo(p) {
+    if (g.over || g.actions <= 0) return false;
+    if (modo === 'plantar') return !p && g.pouch.length > 0;
+    if (modo === 'regar' || modo === 'luz' || modo === 'abrigar') return !!p;
+    if (modo === 'injertar') return !!p && p.stage >= 2;
+    return false;
+  }
+
+  function consejo() {
+    if (g.over) { $('guia').textContent = ''; return; }
+    const plants = g.beds.filter(Boolean);
+    const unwatered = plants.filter(p => p.water <= 0);
+    const grown = plants.filter(p => p.stage >= 2);
+    let msg;
+    if (modo === 'regar' && unwatered.length) {
+      msg = 'water armed — now click one of the glowing words; it grows tonight.';
+    } else if (modo === 'luz' && plants.some(p => !p.lit)) {
+      msg = 'light armed — click a glowing word; lit and watered, it grows twice as fast tonight.';
+    } else if (modo === 'abrigar' && plants.some(p => !p.sheltered)) {
+      msg = 'shelter armed — click each glowing word you want to protect from tonight\'s frost.';
+    } else if (modo === 'injertar' && plants.length) {
+      msg = grown.length >= 2
+        ? 'graft armed — click two glowing grown words; they merge into a word that never existed.'
+        : 'graft needs two grown words (bigger stems); keep tending these.';
+    } else if (!plants.length && g.pouch.length) {
+      msg = 'your move: click a glowing bed to plant «' + (semillaElegida || g.pouch[0]) + '».';
+    } else if (!plants.length) {
+      msg = 'the pouch is empty — end the night; the wind brings new words.';
+    } else if (g.forecast > 0 && plants.some(p => !p.sheltered)) {
+      msg = 'frost tonight (force ' + g.forecast + '): press shelter, then click each word you want to protect.';
+    } else if (unwatered.length) {
+      msg = 'press water, then click «' + unwatered[0].word + '» — a word only grows on watered nights (light makes it faster).';
+    } else if (grown.length >= 2 && g.actions >= 2) {
+      msg = 'all tended. two grown words can merge into a new one with graft (2) — or end the night →';
+    } else {
+      msg = 'everything is tended — end the night →';
+    }
+    $('guia').textContent = msg;
+  }
+
   function pista(w) {
     const t = V.traits(w), cost = V.stageCost(t);
     const sed = t.thirst === 0 ? 'none' : t.thirst === 1 ? 'normal' : 'high';
@@ -299,7 +348,7 @@
     const p = g.beds[i];
     if (modo === 'plantar') {
       if (!semillaElegida) { semillaElegida = g.pouch[0]; if (!semillaElegida) return; }
-      if (!p && g.pouch.includes(semillaElegida) && g.actions > 0) { V.plantAt(g, i, semillaElegida); semillaElegida = null; }
+      if (!p && g.pouch.includes(semillaElegida) && g.actions > 0) { V.plantAt(g, i, semillaElegida); semillaElegida = g.pouch[0] || null; }
     } else if (modo === 'regar') {
       if (p && g.actions > 0) V.water(g, i);
     } else if (modo === 'luz') {
@@ -321,7 +370,7 @@
   document.querySelectorAll('#acciones button[data-modo]').forEach(b => {
     b.onclick = () => { modo = b.dataset.modo; injertoSel = []; render(); };
   });
-  $('noche').onclick = () => { if (!g.over) { V.endDay(g); injertoSel = []; render(); } };
+  $('noche').onclick = () => { if (!g.over) { V.endDay(g); modo = 'plantar'; injertoSel = []; render(); } };
   $('comenzar').onclick = () => empezar($('entrada-siembra').value);
   $('entrada-siembra').addEventListener('keydown', e => { if (e.key === 'Enter') empezar($('entrada-siembra').value); });
   $('otra-siembra').onclick = () => { $('pantalla-final').classList.add('escondido'); $('pantalla-inicio').classList.remove('escondido'); $('entrada-siembra').value = ''; };
