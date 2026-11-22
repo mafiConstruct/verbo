@@ -168,6 +168,12 @@
     const frost = state.forecast;
     if (frost > 0) say(state, 'frost, force ' + frost + '.');
 
+    // a bloomed word returns to the pouch twice, so several beds can hold the
+    // same word; when they do, the log names the bed it means
+    const dup = {};
+    for (const q of state.beds) if (q) dup[q.word] = (dup[q.word] || 0) + 1;
+    const tag = (p, i) => '«' + p.word + '»' + (dup[p.word] > 1 ? ' (bed ' + (i + 1) + ')' : '');
+
     for (let i = 0; i < BEDS; i++) {
       const p = state.beds[i];
       if (!p) continue;
@@ -183,7 +189,7 @@
         p.dry = 0;
       } else if (p.water <= 0 && p.traits.thirst > 0 && p.age >= 2) {
         p.health--;
-        say(state, '«' + p.word + '» went thirsty (−1 health).');
+        say(state, tag(p, i) + ' went thirsty (−1 health).');
       } else if (p.water > 0) { p.water--; p.dry = 0; }
       // frost: night words are at home in it; fire words suffer
       if (frost > 0 && !p.sheltered) {
@@ -192,12 +198,12 @@
         let dmg = base;
         if (th === 'night') dmg = Math.max(0, dmg - 1);
         else if (th === 'flame') dmg += 1;
-        if (dmg > 0) { p.health -= dmg; say(state, 'the frost hit «' + p.word + '» (−' + dmg + ').'); if (p.health > 0) state.scarred[p.word] = true; }
-        else if (th === 'night' && base > 0) say(state, '«' + p.word + '» is at home in the frost.');
+        if (dmg > 0) { p.health -= dmg; say(state, 'the frost hit ' + tag(p, i) + ' (−' + dmg + ').'); if (p.health > 0) state.scarred[p.word] = true; }
+        else if (th === 'night' && base > 0) say(state, tag(p, i) + ' is at home in the frost.');
       }
       // death
       if (p.health <= 0) {
-        say(state, '«' + p.word + '» went dark.');
+        say(state, tag(p, i) + ' went dark.');
         state.lost.push(p.word);
         state.beds[i] = null;
         continue;
@@ -213,7 +219,7 @@
         state.bloomed++;
         state.pouch.push(p.word, p.word);
         state.beds[i] = null;
-        say(state, '«' + p.word + '» bloomed. The word is safe now.');
+        say(state, tag(p, i) + ' bloomed. The word is safe now.');
       }
     }
 
