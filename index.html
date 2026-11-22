@@ -220,7 +220,7 @@
 
   function render(primero) {
     $('dia').textContent = g.over ? 'thaw' : g.day;
-    $('dia-label').textContent = g.over ? 'the' : 'day';
+    $('dia-label').textContent = g.over ? 'the' : 'night';
     $('dia-max').textContent = g.over ? ' has come' : ' / 14';
     $('acciones-restantes').textContent = '●'.repeat(g.actions) + '○'.repeat(V.ACTIONS_PER_DAY - g.actions);
     $('codigo').textContent = g.code;
@@ -362,6 +362,10 @@
       ' · thirst ' + sed + ' · resists frost ' + t.hardiness +
       ' · ' + (plant ? 'blooms in ~' + falta + ' more watered night' + (falta > 1 ? 's' : '') : 'blooms in ~' + falta + ' watered nights') +
       ' (' + Math.ceil(falta / 2) + ' with light)' +
+      // flame words grow +3 under light, night words never faster than 1:
+      // use each word's real best rate before calling anything too late
+      (Math.ceil(falta / (V.themeOf(w, g) === 'flame' ? 3 : V.themeOf(w, g) === 'night' ? 1 : 2)) > V.DAYS - g.day + 1
+        ? ' · <b>too late: it would not bloom before the thaw</b>' : '') +
       (g.vigorous[w] ? ' · <b>vigorous</b>' : '');
   }
 
