@@ -518,3 +518,17 @@ test('watering a bed lets a drop fall where you clicked', async ({ page }) => {
   await expect(page.locator('#guia')).toContainText('already have water');
   await expect(bed.locator('.gota-cayendo')).toHaveCount(0);
 });
+
+test('ending the night blinks the garden into the new night', async ({ page }) => {
+  await beginWithSeed(page, 'lantern');
+  await page.locator('#camas > .cama').first().click(); // plant lantern
+  await page.click('#noche');
+  await expect(page.locator('#camas')).toHaveClass(/paso-noche/);
+});
+
+test('a frost forecast blinks colder', async ({ page }) => {
+  await begin(page, 'seed-2xk5l0'); // night 5 forecast: frost force 2
+  await page.locator('#camas > .cama').first().click(); // plant lantern
+  for (let n = 0; n < 4; n++) await page.click('#noche');
+  await expect(page.locator('#camas')).toHaveClass(/paso-noche-fria/);
+});
