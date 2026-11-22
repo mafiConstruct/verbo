@@ -318,3 +318,14 @@ test('a night word gets honest water advice and cannot waste a lamp action', asy
   await expect(page.locator('#acciones-restantes')).toHaveText('●●○');
   await expect(page.locator('#guia')).toContainText('no action spent');
 });
+
+test('empty garden tells a non-plant mode to arm plant before promising glowing beds', async ({ page }) => {
+  await begin(page, 'after-rain-24');
+  await page.click('button[data-modo="luz"]');
+  await expect(page.locator('.cama.objetivo')).toHaveCount(0);
+  await expect(page.locator('#guia')).toContainText('press plant, then click a glowing bed');
+  await page.click('button[data-modo="plantar"]');
+  await expect(page.locator('.cama.objetivo')).toHaveCount(9);
+  await expect(page.locator('#guia')).toContainText('your move: click a glowing bed');
+  await expect(page.locator('#guia')).not.toContainText('press plant');
+});
