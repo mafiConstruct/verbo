@@ -468,6 +468,23 @@ test('a bloom keeps its flower on the bed that night and the hoard shows flowers
   await expect(bed.locator('svg.planta.eco')).toHaveCount(0);
 });
 
+test('a word that blooms bursts a golden ring at dawn', async ({ page }) => {
+  await begin(page, 'seed-2xk5l0');
+  const bed = page.locator('#camas > .cama').first();
+  for (let n = 0; n < 3; n++) {
+    if (n === 0) await bed.click(); // plant lantern, the auto-selected first seed
+    await page.click('button[data-modo="regar"]');
+    await bed.click();
+    await page.click('button[data-modo="luz"]');
+    await bed.click();
+    await page.click('#noche');
+    if (n < 2) await expect(bed.locator('.flash-flor')).toHaveCount(0); // no bloom, no burst
+  }
+  await expect(bed).toHaveAttribute('aria-label', /bloomed here and is safe in the hoard/);
+  await expect(bed.locator('.flash-flor')).toHaveCount(1); // the burst rings where it opened
+  await expect(bed.locator('.flash-flor')).toHaveCount(0, { timeout: 4000 }); // and fades
+});
+
 test('frost is visible: cold garden, ice on the threatened plant, frost on the shelter glass', async ({ page }) => {
   await begin(page, 'seed-2xk5l0'); // night 1 forecast: frost, force 1
   const bed = page.locator('#camas > .cama').first();
