@@ -1,44 +1,44 @@
-# Textos para la página de itch.io — VERBO
+# itch.io page copy — WORDHOARD
 
-Material listo para cuando se autorice la publicación. Nada de esto está subido.
+Material ready for when publication is authorized. None of this is uploaded.
 
-## Título
-VERBO
+## Title
+WORDHOARD
 
-## Línea corta (tagline)
-Un invernadero de palabras. Catorce noches de invierno: cuidá lo único que crece.
+## Short line (tagline)
+A greenhouse of words. Fourteen nights of winter: tend the only thing that grows.
 
-## Descripción
-Quedan catorce noches de invierno. La bóveda guarda las últimas palabras.
+## Description
+Fourteen nights of winter remain. The vault holds the last words.
 
-VERBO es un juego corto de cuidado y azar. Las semillas son palabras, y cada
-palabra tiene necesidades escritas en sus propias letras: las vocales dan sed,
-las consonantes duras resisten la helada, la longitud marca cuánto tarda en
-florecer. Regá en hilera, dalas luz, abrigalas del frío. Injertá dos tallos y
-va a nacer una palabra que no existía.
+WORDHOARD is a short game about care and chance. The seeds are words, and
+every word has needs written into its own letters: vowels make it thirsty,
+hard consonants shrug off the frost, length sets how long it takes to bloom.
+Water in rows, give them light, shelter them from the cold. Graft two stems
+and a word that never existed is born.
 
-Lo que florece queda guardado. Al deshielo, tu cosecha se lee como un poema:
-ninguno se repite, y un jardín descuidado no llega a decir nada.
+Whatever blooms is kept. At the thaw, your harvest reads as a poem: none of
+them repeats, and a neglected garden never gets to say anything.
 
-- Partidas de 10–15 minutos.
-- Cuatro finales, del silencio a la bóveda que canta.
-- Código de siembra compartible: el mismo código, exactamente el mismo jardín.
-- Corre en el navegador, sin instalación ni conexión.
+- 10–15 minute runs.
+- Four endings, from silence to the hoard that sings.
+- Shareable seed code: same code, exactly the same garden.
+- Runs in the browser, no install, no connection.
 
-## Tags propuestos
+## Suggested tags
 relaxing, words, gardening, procedural, short, singleplayer, atmospheric,
-poetry, spanish, text-based
+poetry, text-based, experimental
 
-## Clasificación
-HTML / navegador. Sin contenido sensible.
+## Classification
+HTML / browser. No sensitive content.
 
-## Precio
-**Decisión abierta para Ivan.** Propuesta de Mafalda: gratis o "pagá lo que
-quieras" sin mínimo, coherente con el gesto del juego. No fijar ningún importe
-sin su OK.
+## Price
+**Open decision for Ivan.** Mafalda's proposal: free, or pay-what-you-want
+with no minimum, in keeping with the gesture of the game. Do not set any
+amount without his OK.
 
 ## Assets
-- Portada: `cover.png` (630×500) en este repo.
-- Capturas para la galería: título, mitad de partida, pantalla final con poema.
-- Paquete a subir: zip con `index.html` + `verbo.js` en la raíz
-  (build: `zip -j verbo.zip index.html verbo.js`).
+- Cover: `cover.png` (630×500) in this repo.
+- Gallery screenshots: title screen, mid-run, ending screen with poem.
+- Package to upload: zip with `index.html` + `verbo.js` at the root
+  (build: `zip -j wordhoard.zip index.html verbo.js`).
