@@ -137,7 +137,12 @@
     }
     state.actions--;
   }
-  function light(state, bed) { state.beds[bed].lit = true; state.actions--; }
+  function light(state, bed) {
+    // the lamp covers the whole row, like watering
+    const row = Math.floor(bed / 3);
+    for (let n = row * 3; n < row * 3 + 3; n++) if (state.beds[n]) state.beds[n].lit = true;
+    state.actions--;
+  }
   function shelter(state, bed) { state.beds[bed].sheltered = true; state.actions--; }
 
   function graft(state, bedA, bedB) {
