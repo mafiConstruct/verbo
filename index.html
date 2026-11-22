@@ -403,6 +403,7 @@
     } else if (!plants.length && g.pouch.length && muyTarde(semillaElegida || g.pouch[0])) {
       msg = g.pouch.some(w => !muyTarde(w))
         ? '«' + (semillaElegida || g.pouch[0]) + '» would not bloom before the thaw — pick another seed from the pouch.'
+        : g.day === V.DAYS ? 'none of these words could bloom tonight. end the night →'
         : 'the thaw will come before any of these could bloom — only the wind could still bring a fast word. end the night →';
     } else if (!plants.length && g.pouch.length) {
       const sel = semillaElegida || g.pouch[0];
@@ -411,7 +412,8 @@
         ? '«' + sel + '» was born — ' + nextMove + ' to plant it; a vigorous word starts strong.'
         : 'your move: ' + nextMove + ' to plant «' + sel + '».';
     } else if (!plants.length) {
-      msg = 'the pouch is empty — end the night; the wind brings new words.';
+      msg = g.day === V.DAYS ? 'the pouch is empty. this is the last night. end the night →'
+        : 'the pouch is empty — end the night; the wind brings new words.';
     } else if (g.forecast > 0 && needsShelter.length) {
       const homebody = plants.find(p => !p.sheltered && V.frostDamage(g, p) === 0 && V.themeOf(p.word, g) === 'night');
       msg = homebody
@@ -423,7 +425,8 @@
       msg = 'press water, then click «' + unwatered[0].word + '» — a word only grows on watered nights' +
         (V.themeOf(unwatered[0].word, g) === 'night' ? '; this night word does not need a lamp.' : ' (light makes it faster).');
     } else if (modo === 'plantar' && !g.pouch.length) {
-      msg = 'the pouch is empty — the wind brings new words; tend what grows or end the night →';
+      msg = g.day === V.DAYS ? 'the pouch is empty. tend what grows or end the night →'
+        : 'the pouch is empty — the wind brings new words; tend what grows or end the night →';
     } else if (modo === 'plantar' && semillaElegida && !g.beds.some(b => !b)) {
       msg = 'every bed is taken — tend what grows, or graft two grown words to make room.';
     } else if (modo === 'plantar' && semillaElegida && muyTarde(semillaElegida)) {
@@ -541,6 +544,7 @@
       ta.value = text; document.body.append(ta); ta.select();
       try { done = document.execCommand('copy'); } catch (err) {}
       ta.remove();
+      b.focus({ preventScroll: true });
     }
     b.textContent = done ? 'copied — it\'s yours' : 'copy failed — select the poem by hand';
     setTimeout(() => { b.textContent = 'copy the poem'; }, 2200);
