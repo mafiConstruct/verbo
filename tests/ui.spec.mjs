@@ -227,3 +227,22 @@ test('beds and seeds work with keyboard and keep focus across redraws', async ({
   await page.keyboard.press('Tab');
   await expect(page.getByRole('button', { name: 'bed 2, empty', exact: true })).toBeFocused();
 });
+
+test('thaw and another-seed screens keep keyboard focus out of the covered garden', async ({ page }) => {
+  await begin(page, 'keyboard-thaw');
+  for (let i = 0; i < 14; i++) await page.locator('#noche').press('Enter');
+  await expect(page.locator('#pantalla-final')).toBeVisible();
+  await expect(page.locator('#copiar-poema')).toBeFocused();
+  await expect(page.locator('#app')).toHaveAttribute('inert', '');
+  await page.keyboard.press('Tab');
+  await expect(page.locator('#otra-siembra')).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#pantalla-inicio')).toBeVisible();
+  await expect(page.locator('#entrada-siembra')).toBeFocused();
+  await expect(page.locator('#app')).toHaveAttribute('inert', '');
+  await page.keyboard.type('keyboard-again');
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#codigo')).toHaveText('keyboard-again');
+  await expect(page.locator('#app')).not.toHaveAttribute('inert', '');
+  await expect(page.getByRole('button', { name: 'bed 1, empty', exact: true })).toBeFocused();
+});
