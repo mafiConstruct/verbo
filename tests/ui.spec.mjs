@@ -532,3 +532,18 @@ test('a frost forecast blinks colder', async ({ page }) => {
   for (let n = 0; n < 4; n++) await page.click('#noche');
   await expect(page.locator('#camas')).toHaveClass(/paso-noche-fria/);
 });
+
+test('a word the frost bites carries the mark while it grows', async ({ page }) => {
+  await begin(page, 'seed-2xk5l0'); // night 1 frost force 1: unsheltered lantern takes −2 and lives
+  const bed = page.locator('#camas > .cama').first();
+  await bed.click(); // plant lantern
+  await page.click('[data-modo="regar"]');
+  await bed.click(); // water it through the frost night
+  await page.click('#noche');
+  await expect(bed).toHaveAttribute('aria-label', /frost-bitten/);
+  await page.click('[data-modo="regar"]');
+  await bed.click(); // water again: sprout by dawn
+  await page.click('#noche');
+  await expect(bed).toHaveAttribute('aria-label', /frost-bitten/);
+  await expect(bed.locator('svg.planta .cicatriz')).toBeVisible();
+});
