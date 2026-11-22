@@ -212,6 +212,7 @@
   function empezar(codigo) {
     g = V.newGame(codigo);
     modo = 'plantar'; semillaElegida = g.pouch[0] || null; injertoSel = [];
+    if (semillaElegida) pista(semillaElegida); // the card should name the selected seed from the start
     logPrevio = 0;
     $('pantalla-inicio').classList.add('escondido');
     $('pantalla-final').classList.add('escondido');
@@ -413,7 +414,10 @@
     if (modo === 'plantar') {
       if (p) { pista(p.word, p); render(); return; } // inspecting a planted word: what does it need, how close is it
       if (!semillaElegida) { semillaElegida = g.pouch[0]; if (!semillaElegida) return; }
-      if (g.pouch.includes(semillaElegida) && g.actions > 0) { V.plantAt(g, i, semillaElegida); semillaElegida = g.pouch[0] || null; }
+      if (g.pouch.includes(semillaElegida) && g.actions > 0) {
+        V.plantAt(g, i, semillaElegida); semillaElegida = g.pouch[0] || null;
+        if (semillaElegida) pista(semillaElegida); // keep the card on the selected seed
+      }
     } else if (modo === 'regar') {
       if (p && g.actions > 0) V.water(g, i);
     } else if (modo === 'luz') {
@@ -428,7 +432,7 @@
         if (injertoSel.length === 2 && g.actions >= 2) {
           const born = V.graft(g, injertoSel[0], injertoSel[1]); injertoSel = [];
           // hand the newborn to the player: already selected, plant mode armed
-          semillaElegida = born; modo = 'plantar';
+          semillaElegida = born; modo = 'plantar'; pista(born);
         }
         else if (injertoSel.length === 2) injertoSel = [i];
       }
