@@ -115,6 +115,48 @@ test('two grown words graft into a new word in the pouch', async ({ page }) => {
   await expect(page.locator('#semillas')).not.toHaveText(pouchBefore);
 });
 
+test('a graft leaves intertwined tendrils where the parents stood', async ({ page }) => {
+  test.setTimeout(60000);
+  await begin(page, 'seed-graft2'); // same engine-verified pair as the graft test
+  for (let night = 0; night < 14; night++) {
+    const glowGraftable = await page.locator('#camas > .cama').evaluateAll(
+      els => els.filter(el => /, (stem|bud),/.test(el.getAttribute('aria-label') || '')).length
+    );
+    if (glowGraftable >= 2) break;
+    for (let k = 0; k < 2; k++) {
+      const plants = await page.locator('#camas > .cama:has(.planta:not(.eco))').count();
+      const empty = await page.locator('#camas > .cama:not(:has(.planta:not(.eco)))').count();
+      const seeds = await page.locator('#semillas > .semilla').count();
+      const actions = await page.locator('#acciones-restantes').textContent();
+      if (plants < 2 && empty > 0 && seeds > 0 && !actions.startsWith('○')) {
+        await page.locator('#camas > .cama:not(:has(.planta:not(.eco)))').first().click();
+      }
+    }
+    for (const bed of await page.locator('#camas > .cama:has(.planta:not(.eco))').all()) {
+      if (!/≈/.test(await bed.locator('.estado').textContent())) {
+        await page.click('button[data-modo="regar"]');
+        await bed.click();
+        await expect(bed.locator('.estado')).toContainText('≈');
+      }
+    }
+    await page.click('#noche');
+  }
+  await page.click('button[data-modo="injertar"]');
+  const glow = page.locator('#camas > .cama.objetivo');
+  await expect(glow).toHaveCount(2);
+  const parentA = (await glow.nth(0).getAttribute('aria-label')).match(/bed \d+, (\w+),/)[1];
+  const parentB = (await glow.nth(1).getAttribute('aria-label')).match(/bed \d+, (\w+),/)[1];
+  await glow.nth(0).click();
+  await glow.nth(1).click();
+  const echoes = page.locator('#camas > .cama:has(.planta.eco.injerto-echo)');
+  await expect(echoes).toHaveCount(2); // both parents leave their tendrils
+  await expect(echoes.nth(0)).toHaveAttribute('aria-label', new RegExp('«' + parentA + '» and «' + parentB + '» intertwined here into «\\w+»'));
+  await expect(echoes.nth(0).locator('.estado')).toHaveText('born here this night');
+  // replanting one of the beds retires its echo
+  await echoes.nth(0).click();
+  await expect(page.locator('#camas > .cama:has(.planta.eco.injerto-echo)')).toHaveCount(1);
+});
+
 test('mobile layout: no horizontal overflow at 375px', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 740 });
   await begin(page);
