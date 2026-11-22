@@ -160,9 +160,9 @@
   </main>
 </div>
 
-<div class="overlay" id="pantalla-inicio">
+<div class="overlay" id="pantalla-inicio" role="dialog" aria-modal="true" aria-labelledby="intro-titulo">
   <div class="tarjeta">
-    <h1>WORDHOARD</h1>
+    <h1 id="intro-titulo">WORDHOARD</h1>
     <div class="sub">a greenhouse of words</div>
     <p class="intro">
       Fourteen nights of winter remain.<br>
@@ -185,7 +185,7 @@
   </div>
 </div>
 
-<div class="overlay escondido" id="pantalla-final">
+<div class="overlay escondido" id="pantalla-final" role="dialog" aria-modal="true" aria-labelledby="final-titulo">
   <div class="tarjeta">
     <h2 id="final-titulo"></h2>
     <div class="sub" id="final-sub"></div>
@@ -223,6 +223,7 @@
     logPrevio = 0;
     $('pantalla-inicio').classList.add('escondido');
     $('pantalla-final').classList.add('escondido');
+    $('app').inert = false;
     $('app').classList.remove('escondido');
     window.scrollTo(0, 0);
     render(true);
@@ -499,7 +500,7 @@
   });
   $('noche').onclick = () => { if (!g.over) { V.endDay(g); modo = 'plantar'; injertoSel = []; render(); } };
   $('comenzar').onclick = () => empezar($('entrada-siembra').value);
-  $('entrada-siembra').addEventListener('keydown', e => { if (e.key === 'Enter') empezar($('entrada-siembra').value); });
+  $('entrada-siembra').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); empezar($('entrada-siembra').value); } });
   // the poem is the payoff of the run; let the player take it with them
   $('copiar-poema').onclick = async () => {
     const e = g.ending, b = $('copiar-poema');
@@ -523,7 +524,7 @@
     b.textContent = done ? 'copied — it\'s yours' : 'copy failed — select the poem by hand';
     setTimeout(() => { b.textContent = 'copy the poem'; }, 2200);
   };
-  $('otra-siembra').onclick = () => { $('pantalla-final').classList.add('escondido'); $('pantalla-inicio').classList.remove('escondido'); $('entrada-siembra').value = ''; };
+  $('otra-siembra').onclick = () => { $('pantalla-final').classList.add('escondido'); $('pantalla-inicio').classList.remove('escondido'); $('entrada-siembra').value = ''; $('entrada-siembra').focus(); };
   $('repetir-siembra').onclick = () => empezar(g.code);
 
   function mostrarFinal() {
@@ -536,6 +537,8 @@
       'you survived ' + e.days + ' nights · ' + e.bloomed + ' words bloomed · ' +
       e.lost + ' lost · ' + e.grafts + ' grafts · diversity ' + e.diversity + '/4<br>seed: ' + e.code;
     $('pantalla-final').classList.remove('escondido');
+    $('app').inert = true;
+    $('copiar-poema').focus({ preventScroll: true });
   }
 
   if (location.hash.startsWith('#demo')) {
