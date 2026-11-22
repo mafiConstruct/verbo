@@ -82,5 +82,31 @@ ok(endings['Silence'] === undefined || endings['Silence'] <= 10, 'silence is rar
   console.log('total neglect:', g.ending.title);
 }
 
+
+// 7. Words have weather
+{
+  // night words shrug off frost; flame words suffer extra
+  const g = V.newGame('weather-frost');
+  V.plantAt(g, 0, 'snow');   // night theme
+  V.plantAt(g, 1, 'ember');  // flame theme
+  g.actions = 3; g.forecast = 1;
+  V.endDay(g);
+  const snow = g.beds[0], ember = g.beds[1];
+  ok(snow && snow.health === 4, 'snow unharmed by frost 1, health ' + (snow && snow.health));
+  ok(ember && ember.health === 2, 'ember takes extra frost damage, health ' + (ember && ember.health));
+}
+{
+  // tide words bear every other dry night; loam words don't
+  const g = V.newGame('weather-thirst');
+  V.plantAt(g, 0, 'river');  // tide
+  V.plantAt(g, 1, 'peat');   // loam
+  g.forecast = 0; V.endDay(g);
+  g.forecast = 0; V.endDay(g);
+  g.forecast = 0; V.endDay(g);
+  const river = g.beds[0], peat = g.beds[1];
+  ok(river && river.health === 3, 'river loses 1 health over 2 thirsty nights, health ' + (river && river.health));
+  ok(peat && peat.health === 2, 'peat loses 2 health over 2 thirsty nights, health ' + (peat && peat.health));
+}
+console.log(fails === 0 ? 'WEATHER OK' : 'WEATHER FAILURES: ' + fails);
 console.log(fails === 0 ? 'ALL OK' : fails + ' FAILURES');
 process.exit(fails === 0 ? 0 : 1);
