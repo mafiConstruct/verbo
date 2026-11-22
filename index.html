@@ -353,12 +353,15 @@
     leaf: 'a green word', loam: 'an earth word', wing: 'a winged word', stone: 'a stone word',
   };
 
-  function pista(w) {
+  function pista(w, plant) {
     const t = V.traits(w), cost = V.stageCost(t);
     const sed = t.thirst === 0 ? 'none' : t.thirst === 1 ? 'normal' : 'high';
+    // a planted word has progress already; what matters is what remains
+    const falta = plant ? Math.max(1, cost * 4 - plant.progress) : cost * 4;
     $('pista').innerHTML = '«<b>' + w + '</b>» · ' + (THEME_BLURB[V.themeOf(w, g)] || 'a word') +
       ' · thirst ' + sed + ' · resists frost ' + t.hardiness +
-      ' · blooms in ~' + (cost * 4) + ' watered nights (' + Math.ceil(cost * 4 / 2) + ' with light)' +
+      ' · ' + (plant ? 'blooms in ~' + falta + ' more watered night' + (falta > 1 ? 's' : '') : 'blooms in ~' + falta + ' watered nights') +
+      ' (' + Math.ceil(falta / 2) + ' with light)' +
       (g.vigorous[w] ? ' · <b>vigorous</b>' : '');
   }
 
@@ -366,8 +369,9 @@
     if (g.over) return;
     const p = g.beds[i];
     if (modo === 'plantar') {
+      if (p) { pista(p.word, p); render(); return; } // inspecting a planted word: what does it need, how close is it
       if (!semillaElegida) { semillaElegida = g.pouch[0]; if (!semillaElegida) return; }
-      if (!p && g.pouch.includes(semillaElegida) && g.actions > 0) { V.plantAt(g, i, semillaElegida); semillaElegida = g.pouch[0] || null; }
+      if (g.pouch.includes(semillaElegida) && g.actions > 0) { V.plantAt(g, i, semillaElegida); semillaElegida = g.pouch[0] || null; }
     } else if (modo === 'regar') {
       if (p && g.actions > 0) V.water(g, i);
     } else if (modo === 'luz') {
