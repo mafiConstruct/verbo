@@ -319,7 +319,7 @@
     if (modo === 'plantar') return !p && g.pouch.length > 0 && !muyTarde(semillaElegida || g.pouch[0]);
     // glow means "this action would change something tonight"
     if (modo === 'regar') return !!p && p.water <= 0;
-    if (modo === 'luz') return !!p && !p.lit;
+    if (modo === 'luz') return !!p && !p.lit && V.themeOf(p.word, g) !== 'night'; // light does nothing for night words
     if (modo === 'abrigar') return !!p && !p.sheltered && V.frostDamage(g, p) > 0;
     if (modo === 'injertar') return !!p && p.stage >= 2;
     return false;
@@ -332,11 +332,15 @@
     const grown = plants.filter(p => p.stage >= 2);
     // shelter advice names only the words the frost would actually hurt
     const needsShelter = plants.filter(p => !p.sheltered && V.frostDamage(g, p) > 0);
+    // light only feeds non-night words; lighting a night word is a wasted action
+    const lightable = plants.filter(p => !p.lit && V.themeOf(p.word, g) !== 'night');
     let msg;
     if (modo === 'regar' && unwatered.length) {
       msg = 'water armed — now click one of the glowing words; it grows tonight.';
+    } else if (modo === 'luz' && lightable.length) {
+      msg = 'light armed — click a glowing word; its lamp covers the whole row for tonight. lit and watered, a word grows twice as fast.';
     } else if (modo === 'luz' && plants.some(p => !p.lit)) {
-      msg = 'light armed — click a word; its lamp covers the whole row for tonight. lit and watered, a word grows twice as fast.';
+      msg = 'only night words are unlit, and they shun the light — the lamp would not help them.';
     } else if (modo === 'abrigar' && needsShelter.length) {
       msg = 'shelter armed — click each glowing word; the frost would hurt it tonight.';
     } else if (modo === 'injertar' && injertoSel.length === 1 && g.beds[injertoSel[0]]) {
