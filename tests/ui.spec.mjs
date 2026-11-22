@@ -444,3 +444,15 @@ test('frost is visible: cold garden, ice on the threatened plant, frost on the s
   await page.click('#noche');
   await expect(page.locator('#camas')).not.toHaveClass(/helada/);
 });
+
+test('the moon waxes across the season: shadow recedes from night 1 toward the thaw', async ({ page }) => {
+  await begin(page);
+  const moon = page.locator('#luna');
+  await expect(moon).toHaveAttribute('aria-label', /waxing moon, night 1 of 14/);
+  const cxNight1 = await page.locator('#luna .luna-sombra').getAttribute('cx');
+  await page.click('#noche');
+  await expect(page.locator('#dia')).toHaveText('2');
+  await expect(moon).toHaveAttribute('aria-label', /waxing moon, night 2 of 14/);
+  const cxNight2 = await page.locator('#luna .luna-sombra').getAttribute('cx');
+  expect(parseFloat(cxNight2)).toBeLessThan(parseFloat(cxNight1)); // more of the moon is lit
+});
