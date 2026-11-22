@@ -103,7 +103,7 @@
   <header>
     <span class="titulo">VERBO</span>
     <span class="datos">
-      día <b id="dia">1</b> / 14 ·
+      <span id="dia-label">día</span> <b id="dia">1</b><span id="dia-max"> / 14</span> ·
       acciones <b id="acciones-restantes">●●●</b> ·
       esta noche: <b id="pronostico"></b> ·
       siembra <b id="codigo"></b>
@@ -198,7 +198,9 @@
   let logPrevio = 0;
 
   function render(primero) {
-    $('dia').textContent = g.day;
+    $('dia').textContent = g.over ? 'deshielo' : g.day;
+    $('dia-label').textContent = g.over ? 'llegó el' : 'día';
+    $('dia-max').textContent = g.over ? '' : ' / 14';
     $('acciones-restantes').textContent = '●'.repeat(g.actions) + '○'.repeat(V.ACTIONS_PER_DAY - g.actions);
     $('codigo').textContent = g.code;
     const pr = $('pronostico');
