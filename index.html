@@ -107,6 +107,14 @@
   .overlay .sub { color: var(--dim); font-size: 13px; margin-bottom: 26px; letter-spacing: 0.2em; }
   .overlay p.intro { line-height: 1.8; font-size: 15px; }
   .overlay .poema { font-size: 17px; line-height: 2.1; margin: 10px 0 22px; }
+  #final-jardin { display: flex; flex-wrap: wrap; gap: 10px 16px; justify-content: center; align-items: flex-end; margin: 0 0 20px; }
+  #final-jardin:empty { display: none; }
+  #final-jardin .final-flor, #final-jardin .final-marchita { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; font-style: italic; font-size: 12px; line-height: 1.3; }
+  #final-jardin .final-flor b { color: var(--amber); font-weight: normal; }
+  #final-jardin .final-flor svg { width: 26px; height: 35px; }
+  #final-jardin .final-marchita { color: #7a7264; }
+  #final-jardin .final-marchita b { color: #7a7264; font-weight: normal; }
+  #final-jardin .final-marchita svg { width: 26px; height: 35px; }
   .overlay .stats { color: var(--dim); font-size: 13px; line-height: 1.9; margin-bottom: 22px; }
   .overlay input {
     background: var(--panel); border: 1px solid var(--line); color: var(--txt);
@@ -212,6 +220,7 @@
     <h2 id="final-titulo"></h2>
     <div class="sub" id="final-sub"></div>
     <div class="poema" id="final-poema"></div>
+    <div id="final-jardin"></div>
     <div class="stats" id="final-stats"></div>
     <div class="fila">
       <button id="copiar-poema">copy the poem</button>
@@ -328,6 +337,22 @@
   }
 
   // the stem the frost took: bent, colorless, one leaf fallen — it stays the night
+  function witheredFlower() {
+    const ns = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('viewBox', '0 0 24 32');
+    svg.setAttribute('aria-hidden', 'true');
+    const add = (tag, attrs) => {
+      const el = document.createElementNS(ns, tag);
+      Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
+      svg.append(el); return el;
+    };
+    add('path', { d: 'M12 31 Q12 22 7 18', fill: 'none', stroke: 'currentColor', 'stroke-width': 1.6, 'stroke-linecap': 'round' });
+    add('path', { d: 'M7 18 Q2 17 2 21 Q6 22 7 18', fill: 'currentColor', opacity: .7 });
+    add('ellipse', { cx: 17, cy: 30, rx: 2.4, ry: 1.2, fill: 'currentColor', opacity: .4, transform: 'rotate(-20 17 30)' });
+    return svg;
+  }
+
   function witherEchoPicture() {
     const ns = 'http://www.w3.org/2000/svg';
     const svg = document.createElementNS(ns, 'svg');
@@ -747,6 +772,38 @@
     const fs = $('final-sub');
     if (e.subtitle) { fs.textContent = e.subtitle; fs.style.display = ''; } else { fs.style.display = 'none'; }
     $('final-poema').innerHTML = e.lines.map(l => '<div>' + l + '</div>').join('');
+    // the thaw garden: what bloomed stands in flower, what winter keeps lies withered
+    const jardin = $('final-jardin');
+    jardin.innerHTML = '';
+    const keptWords = [...new Set(g.poem)];
+    keptWords.forEach(w => {
+      const flor = document.createElement('span');
+      flor.className = 'final-flor fam-' + V.familyOf(w);
+      flor.append(hoardFlower());
+      const nombre = document.createElement('b');
+      nombre.textContent = '«' + w + '»';
+      flor.append(nombre);
+      jardin.append(flor);
+    });
+    const winterKept = [...new Set(g.lost)].filter(w => !g.poem.includes(w));
+    winterKept.forEach(w => {
+      const seca = document.createElement('span');
+      seca.className = 'final-marchita';
+      seca.append(witheredFlower());
+      const nombre = document.createElement('b');
+      nombre.textContent = '«' + w + '»';
+      seca.append(nombre);
+      jardin.append(seca);
+    });
+    if (keptWords.length || winterKept.length) {
+      jardin.setAttribute('role', 'img');
+      jardin.setAttribute('aria-label',
+        (keptWords.length ? 'the garden the thaw found: ' + keptWords.map(w => '«' + w + '»').join(', ') : 'nothing bloomed') +
+        (winterKept.length ? ' — winter keeps ' + winterKept.map(w => '«' + w + '»').join(', ') : ''));
+    } else {
+      jardin.removeAttribute('role');
+      jardin.removeAttribute('aria-label');
+    }
     const stats = $('final-stats');
     stats.textContent =
       'you survived ' + e.days + ' nights · ' + e.bloomed + ' words bloomed · ' +
