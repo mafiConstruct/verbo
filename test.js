@@ -112,6 +112,14 @@ ok(endings['Silence'] === undefined || endings['Silence'] <= 10, 'silence is rar
   g.forecast = 0; V.endDay(g);
   ok(g.beds[0].progress === 3, 'lit ember progressed 3, got ' + g.beds[0].progress);
 }
+{
+  // a night word shuns the light: lit, it still grows 1 per night
+  const g = V.newGame('weather-nightlight');
+  V.plantAt(g, 0, 'snow');
+  V.water(g, 0); V.light(g, 0);
+  g.forecast = 0; V.endDay(g);
+  ok(g.beds[0].progress === 1, 'lit snow progressed 1, got ' + g.beds[0].progress);
+}
 console.log(fails === 0 ? 'WEATHER OK' : 'WEATHER FAILURES: ' + fails);
 console.log(fails === 0 ? 'ALL OK' : fails + ' FAILURES');
 process.exit(fails === 0 ? 0 : 1);
