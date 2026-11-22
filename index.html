@@ -387,7 +387,7 @@
     $('final-poema').innerHTML = e.lines.map(l => '<div>' + l + '</div>').join('');
     $('final-stats').innerHTML =
       'you survived ' + e.days + ' nights · ' + e.bloomed + ' words bloomed · ' +
-      e.grafts + ' grafts · diversity ' + e.diversity + '/4<br>seed: ' + e.code;
+      e.lost + ' lost · ' + e.grafts + ' grafts · diversity ' + e.diversity + '/4<br>seed: ' + e.code;
     $('pantalla-final').classList.remove('escondido');
   }
 
