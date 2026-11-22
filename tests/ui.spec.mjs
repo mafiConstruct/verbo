@@ -354,3 +354,33 @@ test('seed codes remain literal text in the thaw stats, never HTML', async ({ pa
   await expect(page.locator('#final-stats')).toContainText('seed: ' + code);
   await expect(page.locator('#final-stats b')).toHaveCount(0);
 });
+
+test('bed accessible names expose water and nightly care, including resets', async ({ page }) => {
+  await beginWithSeed(page, 'ash');
+  const bed = page.locator('#camas > .cama').first();
+  await bed.click();
+  await expect(bed).toHaveAccessibleName(/water 0, unlit, unsheltered$/);
+  await page.click('button[data-modo="regar"]');
+  await bed.click();
+  await expect(bed).toHaveAccessibleName(/water 2, unlit, unsheltered$/);
+  await page.click('button[data-modo="luz"]');
+  await bed.click();
+  await expect(bed).toHaveAccessibleName(/water 2, lit, unsheltered$/);
+  await page.click('#noche');
+  await expect(bed).toHaveAccessibleName(/water 1, unlit, unsheltered$/);
+});
+
+test('action buttons expose which tool is armed and reset to plant each night', async ({ page }) => {
+  await beginWithSeed(page, 'ash');
+  const plant = page.locator('button[data-modo="plantar"]');
+  const water = page.locator('button[data-modo="regar"]');
+  await expect(plant).toHaveAttribute('aria-pressed', 'true');
+  await expect(water).toHaveAttribute('aria-pressed', 'false');
+  await page.locator('#camas > .cama').first().click();
+  await water.click();
+  await expect(water).toHaveAttribute('aria-pressed', 'true');
+  await expect(plant).toHaveAttribute('aria-pressed', 'false');
+  await page.click('#noche');
+  await expect(plant).toHaveAttribute('aria-pressed', 'true');
+  await expect(water).toHaveAttribute('aria-pressed', 'false');
+});
