@@ -211,7 +211,10 @@
   function composePoem(state) {
     if (!state.poem.length) return ['the thaw came.', 'there was nothing to say.'];
     const seen = {}, kept = [];
-    for (const w of state.poem) { seen[w] = (seen[w] || 0) + 1; if (seen[w] <= 2) kept.push(w); }
+    for (const w of state.poem) {
+      seen[w] = (seen[w] || 0) + 1;
+      if (seen[w] <= 2 && kept[kept.length - 1] !== w) kept.push(w);
+    }
     const words = kept.slice(0, 9);
     const lines = [];
     for (let i = 0; i < words.length; i += 3) {
