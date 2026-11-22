@@ -302,7 +302,7 @@
   const camasEl = $('camas'), semillasEl = $('semillas'), registroEl = $('registro');
 
   // A word grows a body: the silhouette is progress, care is visible around it.
-  function plantPicture(p, frostThreat) {
+  function plantPicture(p, frostThreat, scarred) {
     const ns = 'http://www.w3.org/2000/svg';
     const svg = document.createElementNS(ns, 'svg');
     svg.setAttribute('viewBox', '0 0 120 92');
@@ -330,6 +330,10 @@
       add('path', { d: 'M99 3 V6 M99 26 V29 M86 16 H89 M109 16 H112', stroke: '#e8c872', 'stroke-width': 1.5 });
     }
     if (p.sheltered) add('path', { d: 'M19 70 V19 Q60 -3 101 19 V70 M19 20 H101', fill: 'none', stroke: '#b3d7cd', 'stroke-width': 1.5, opacity: .7 });
+    // a frost it lived through leaves a bite: pale nicks on the stem until it blooms
+    if (scarred && stage >= 1) {
+      add('path', { d: 'M54 52 l6 -3 M53 58 l7 -3 M55 46 l5 -2', stroke: '#b3d7cd', 'stroke-width': 1.6, 'stroke-linecap': 'round', opacity: .85, class: 'cicatriz' });
+    }
     // frost you can see: ice on the threatened plant, or on the glass that holds it off
     if (frostThreat) {
       const ice = p.sheltered
@@ -434,10 +438,11 @@
       const d = document.createElement('button');
       d.type = 'button'; d.dataset.focusKey = 'bed:' + i;
       const amenazaHelada = !!p && g.forecast > 0 && V.frostDamage(g, p) > 0;
-      d.setAttribute('aria-label', 'bed ' + (i + 1) + (p ? ', ' + p.word + ', ' + V.STAGES[Math.min(p.stage, 3)] + ', health ' + p.health + ', water ' + p.water + (p.lit ? ', lit' : ', unlit') + (p.sheltered ? ', sheltered' : ', unsheltered') + (p && amenazaHelada ? (p.sheltered ? ', frost held off by the shelter' : ', frost threatens it tonight') : '') : bloomEchoes[i] ? ', empty — «' + bloomEchoes[i] + '» bloomed here and is safe in the hoard' : witherEchoes[i] ? ', empty — «' + witherEchoes[i] + '» went dark here this night' : ', empty'));
+      const mordida = !!p && !!g.scarred[p.word];
+      d.setAttribute('aria-label', 'bed ' + (i + 1) + (p ? ', ' + p.word + ', ' + V.STAGES[Math.min(p.stage, 3)] + ', health ' + p.health + ', water ' + p.water + (p.lit ? ', lit' : ', unlit') + (p.sheltered ? ', sheltered' : ', unsheltered') + (mordida ? ', frost-bitten' : '') + (p && amenazaHelada ? (p.sheltered ? ', frost held off by the shelter' : ', frost threatens it tonight') : '') : bloomEchoes[i] ? ', empty — «' + bloomEchoes[i] + '» bloomed here and is safe in the hoard' : witherEchoes[i] ? ', empty — «' + witherEchoes[i] + '» went dark here this night' : ', empty'));
       d.className = 'cama' + (injertoSel.includes(i) ? ' seleccionada' : '') + (esObjetivo(p) ? ' objetivo' : '');
       if (p) {
-        const pre = plantPicture(p, amenazaHelada);
+        const pre = plantPicture(p, amenazaHelada, mordida);
         d.classList.add('growing', 'fam-' + p.traits.fam);
         if (p.water) d.classList.add('watered');
         if (p.lit) d.classList.add('sunlit');
