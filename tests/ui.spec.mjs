@@ -345,3 +345,12 @@ test('last-night empty-garden advice does not promise useful future wind', async
   await expect(page.locator('#guia')).toContainText('none of these words could bloom tonight');
   await expect(page.locator('#guia')).not.toContainText('wind');
 });
+
+test('seed codes remain literal text in the thaw stats, never HTML', async ({ page }) => {
+  const code = 'winter <b>garden</b> & snow';
+  await begin(page, code);
+  await expect(page.locator('#codigo')).toHaveText(code);
+  for (let i = 0; i < 14; i++) await page.locator('#noche').click();
+  await expect(page.locator('#final-stats')).toContainText('seed: ' + code);
+  await expect(page.locator('#final-stats b')).toHaveCount(0);
+});
