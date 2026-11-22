@@ -130,7 +130,7 @@ async function beginWithSeed(page, word, vigorous = false, day = 1) {
   await page.evaluate(({ word, vigorous, day }) => {
     const original = VERBO.newGame;
     VERBO.newGame = code => {
-      const state = original(code);
+      const state = original(code || 'hoardcheck');
       state.pouch = [word]; state.day = day; state.forecast = 0;
       if (vigorous) state.vigorous[word] = true;
       return state;
@@ -183,5 +183,25 @@ test('inspected planted word refreshes its remaining growth after dawn', async (
   await expect(page.locator('#pista')).toContainText('1 more watered night');
   await page.click('#noche');
   await expect(page.locator('#pista')).not.toContainText('1 more watered night');
-  await expect(page.locator('#pista')).toContainText('already safe in the hoard');
+  await expect(page.locator('#tesoro')).toContainText('ash');
+  const selected = await page.locator('.semilla.elegida').textContent();
+  await expect(page.locator('#pista')).toContainText('«' + selected.trim() + '»');
+});
+
+test('empty-garden advice distinguishes one late seed from an entirely late pouch', async ({ page }) => {
+  await page.goto('/index.html');
+  await page.evaluate(() => {
+    const original = VERBO.newGame;
+    VERBO.newGame = code => {
+      const state = original(code || 'hoardcheck');
+      state.pouch = ['marrow', 'lantern']; state.day = 8; state.forecast = 0;
+      return state;
+    };
+  });
+  await page.click('#comenzar');
+  await expect(page.locator('#guia')).toContainText('pick another seed from the pouch');
+  await expect(page.locator('#guia')).not.toContainText('any of these');
+  await page.locator('.semilla').filter({ hasText: /^lantern$/ }).click();
+  await expect(page.locator('.cama.objetivo')).toHaveCount(9);
+  await expect(page.locator('#guia')).toContainText('plant «lantern»');
 });
