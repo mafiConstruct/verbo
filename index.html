@@ -385,7 +385,9 @@
         ? 'graft armed — click two glowing grown words; they merge into a word that never existed.'
         : 'graft needs two grown words (bigger stems); keep tending these.';
     } else if (!plants.length && g.pouch.length && muyTarde(semillaElegida || g.pouch[0])) {
-      msg = 'the thaw will come before any of these could bloom — only the wind could still bring a fast word. end the night →';
+      msg = g.pouch.some(w => !muyTarde(w))
+        ? '«' + (semillaElegida || g.pouch[0]) + '» would not bloom before the thaw — pick another seed from the pouch.'
+        : 'the thaw will come before any of these could bloom — only the wind could still bring a fast word. end the night →';
     } else if (!plants.length && g.pouch.length) {
       const sel = semillaElegida || g.pouch[0];
       msg = g.vigorous[sel]
