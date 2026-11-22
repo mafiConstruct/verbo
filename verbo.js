@@ -210,15 +210,17 @@
 
   function composePoem(state) {
     if (!state.poem.length) return ['the thaw came.', 'there was nothing to say.'];
-    const seen = {}, kept = [];
-    for (const w of state.poem) {
-      seen[w] = (seen[w] || 0) + 1;
-      if (seen[w] <= 2 && kept[kept.length - 1] !== w) kept.push(w);
-    }
+    // one line per word at most: a repeated bloom feeds the count, not the verse
+    const kept = [];
+    for (const w of state.poem) if (!kept.includes(w)) kept.push(w);
     const words = kept.slice(0, 9);
+    // uneven verses read like a voice, not a list: 3, 2, 3, then a single word
+    const pattern = [3, 2, 3, 1];
     const lines = [];
-    for (let i = 0; i < words.length; i += 3) {
-      lines.push(words.slice(i, i + 3).join(' '));
+    for (let i = 0, p = 0; i < words.length; p++) {
+      const n = Math.min(pattern[p % pattern.length], words.length - i);
+      lines.push(words.slice(i, i + n).join(', '));
+      i += n;
     }
     lines.push(CLOSERS[dominantFamily(state.poem)]);
     return lines;
