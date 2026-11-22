@@ -429,15 +429,17 @@
       e.lost + ' lost · ' + e.grafts + ' grafts · diversity ' + e.diversity + '/4',
       'seed: ' + e.code + ' — WORDHOARD');
     const text = lines.join('\n');
-    try {
-      if (navigator.clipboard && navigator.clipboard.writeText) await navigator.clipboard.writeText(text);
-      else {
-        const ta = document.createElement('textarea');
-        ta.value = text; document.body.append(ta); ta.select();
-        document.execCommand('copy'); ta.remove();
-      }
-      b.textContent = 'copied — it\'s yours';
-    } catch (err) { b.textContent = 'copy failed — select the poem by hand'; }
+    // clipboard API first (needs permission inside an iframe), then the old-school
+    // textarea trick; a failure says so instead of pretending it worked
+    let done = false;
+    try { if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(text); done = true; } } catch (err) {}
+    if (!done) {
+      const ta = document.createElement('textarea');
+      ta.value = text; document.body.append(ta); ta.select();
+      try { done = document.execCommand('copy'); } catch (err) {}
+      ta.remove();
+    }
+    b.textContent = done ? 'copied — it\'s yours' : 'copy failed — select the poem by hand';
     setTimeout(() => { b.textContent = 'copy the poem'; }, 2200);
   };
   $('otra-siembra').onclick = () => { $('pantalla-final').classList.add('escondido'); $('pantalla-inicio').classList.remove('escondido'); $('entrada-siembra').value = ''; };
