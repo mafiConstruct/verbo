@@ -246,3 +246,22 @@ test('thaw and another-seed screens keep keyboard focus out of the covered garde
   await expect(page.locator('#app')).not.toHaveAttribute('inert', '');
   await expect(page.getByRole('button', { name: 'bed 1, empty', exact: true })).toBeFocused();
 });
+
+test('intro fits narrow phones and can scroll on a short landscape screen', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.goto('/index.html');
+  const title = await page.locator('#intro-titulo').boundingBox();
+  expect(title.x).toBeGreaterThanOrEqual(0);
+  expect(title.x + title.width).toBeLessThanOrEqual(320);
+  await page.locator('#comenzar').scrollIntoViewIfNeeded();
+  await expect(page.locator('#comenzar')).toBeInViewport();
+  await page.setViewportSize({ width: 667, height: 320 });
+  await page.locator('#intro-titulo').scrollIntoViewIfNeeded();
+  await expect(page.locator('#intro-titulo')).toBeInViewport();
+  const top = await page.locator('#intro-titulo').boundingBox();
+  expect(top.y).toBeGreaterThanOrEqual(0);
+  await page.locator('#comenzar').scrollIntoViewIfNeeded();
+  await expect(page.locator('#comenzar')).toBeInViewport();
+  await page.click('#comenzar');
+  await expect(page.locator('#pantalla-inicio')).toBeHidden();
+});
