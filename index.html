@@ -314,7 +314,10 @@
   function esObjetivo(p) {
     if (g.over || g.actions <= 0) return false;
     if (modo === 'plantar') return !p && g.pouch.length > 0 && !muyTarde(semillaElegida || g.pouch[0]);
-    if (modo === 'regar' || modo === 'luz' || modo === 'abrigar') return !!p;
+    // glow means "this action would change something tonight"
+    if (modo === 'regar') return !!p && p.water <= 0;
+    if (modo === 'luz') return !!p && !p.lit;
+    if (modo === 'abrigar') return !!p && !p.sheltered && g.forecast > 0;
     if (modo === 'injertar') return !!p && p.stage >= 2;
     return false;
   }
