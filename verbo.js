@@ -164,6 +164,18 @@
     return state.beds.filter(Boolean).length + state.pouch.length;
   }
 
+  // the exact harm tonight's frost would do to this plant, unsheltered:
+  // hardiness soaks the first points, night words shrug one more,
+  // fire words always feel the cold
+  function frostDamage(state, p) {
+    if (state.forecast <= 0) return 0;
+    const base = Math.max(0, state.forecast - p.traits.hardiness);
+    const th = themeOf(p.word, state);
+    if (th === 'night') return Math.max(0, base - 1);
+    if (th === 'flame') return base + 1;
+    return base;
+  }
+
   function endDay(state) {
     const frost = state.forecast;
     if (frost > 0) say(state, 'frost, force ' + frost + '.');
@@ -193,11 +205,9 @@
       } else if (p.water > 0) { p.water--; p.dry = 0; }
       // frost: night words are at home in it; fire words suffer
       if (frost > 0 && !p.sheltered) {
-        const base = Math.max(0, frost - p.traits.hardiness);
         const th = themeOf(p.word, state);
-        let dmg = base;
-        if (th === 'night') dmg = Math.max(0, dmg - 1);
-        else if (th === 'flame') dmg += 1;
+        const base = Math.max(0, frost - p.traits.hardiness);
+        const dmg = frostDamage(state, p);
         if (dmg > 0) { p.health -= dmg; say(state, 'the frost hit ' + tag(p, i) + ' (−' + dmg + ').'); if (p.health > 0) state.scarred[p.word] = true; }
         else if (th === 'night' && base > 0) say(state, tag(p, i) + ' is at home in the frost.');
       }
@@ -354,7 +364,7 @@
 
   return {
     newGame, endDay, plantAt, water, light, shelter, graft, finish, stageCost,
-    traits, blend, familyOf, themeOf, composePoem, aliveCount, rollFrost,
+    traits, blend, familyOf, themeOf, composePoem, aliveCount, rollFrost, frostDamage,
     LEXICON, RARE, THEME_MAP, STAGES, BEDS, DAYS, ACTIONS_PER_DAY,
     mulberry32, hashStr,
   };
