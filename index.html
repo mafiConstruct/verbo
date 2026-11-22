@@ -76,6 +76,8 @@
   button:disabled { opacity: 0.35; cursor: default; }
   #noche { border-color: var(--water); color: var(--water); }
   #noche:hover:not(:disabled) { border-color: #bfe6ee; color: #bfe6ee; }
+  /* when nothing is left to tend, the way forward lights up */
+  #noche.listo { border-color: var(--amber); color: var(--amber); box-shadow: 0 0 6px #e8c87244; }
 
   #registro { height: 150px; overflow-y: auto; font-size: 12.5px; line-height: 1.5; }
   #registro .nueva { color: var(--bright); }
@@ -324,7 +326,7 @@
   }
 
   function consejo() {
-    if (g.over) { $('guia').textContent = ''; return; }
+    if (g.over) { $('guia').textContent = ''; $('noche').classList.remove('listo'); return; }
     const plants = g.beds.filter(Boolean);
     const unwatered = plants.filter(p => p.water <= 0);
     const grown = plants.filter(p => p.stage >= 2);
@@ -337,6 +339,8 @@
       msg = 'light armed — click a word; its lamp covers the whole row for tonight. lit and watered, a word grows twice as fast.';
     } else if (modo === 'abrigar' && needsShelter.length) {
       msg = 'shelter armed — click each glowing word; the frost would hurt it tonight.';
+    } else if (modo === 'injertar' && injertoSel.length === 1 && g.beds[injertoSel[0]]) {
+      msg = '«' + g.beds[injertoSel[0]].word + '» selected — click a second glowing word; they merge into a word that never existed.';
     } else if (modo === 'injertar' && plants.length) {
       msg = grown.length >= 2
         ? 'graft armed — click two glowing grown words; they merge into a word that never existed.'
@@ -362,6 +366,9 @@
       msg = 'everything is tended — end the night →';
     }
     $('guia').textContent = msg;
+    // every piece of advice that ends in "end the night" means nothing is
+    // left to tend: light the button that moves the game forward
+    $('noche').classList.toggle('listo', msg.endsWith('end the night →') || msg.startsWith('the pouch is empty'));
   }
 
   const THEME_BLURB = {
