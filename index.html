@@ -50,6 +50,18 @@
   .cama .planta { display: block; width: min(120px, 90%); height: 92px; flex-shrink: 0; margin-bottom: 2px; }
   .cama.growing { background: radial-gradient(ellipse at 50% 80%, #25412455, transparent 70%), var(--panel); }
   .cama.watered { background: radial-gradient(ellipse at 50% 95%, #285d7066, transparent 70%), var(--panel); }
+  .cama .gota-cayendo {
+    position: absolute; left: 50%; top: 6px; width: 7px; height: 10px; margin-left: -3.5px;
+    background: #8ac6d1; border-radius: 50% 50% 60% 60% / 40% 40% 70% 70%;
+    pointer-events: none; animation: caer-gota .7s ease-in forwards; z-index: 2;
+  }
+  @keyframes caer-gota {
+    0% { transform: translateY(0) scale(.6); opacity: 0; }
+    20% { opacity: .95; }
+    80% { transform: translateY(58px) scale(1); opacity: .95; }
+    100% { transform: translateY(64px) scaleY(.4); opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) { .cama .gota-cayendo { display: none; } }
   .cama.sunlit { background: radial-gradient(ellipse at 80% 5%, #a68c3444, transparent 80%), var(--panel); }
   .cama.ailing .planta { color: var(--hurt); }
   /* frost is the antagonist: on frost nights the cold is on the garden itself */
@@ -671,6 +683,7 @@
       (g.parents[w] ? ' · child of «' + g.parents[w][0] + '» and «' + g.parents[w][1] + '»' : '');
   }
 
+  let gotaReciente = null;
   function clicCama(i) {
     if (g.over) return;
     const p = g.beds[i];
@@ -687,7 +700,7 @@
       if (p && g.actions > 0) {
         const cap = V.themeOf(p.word, g) === 'tide' ? 3 : 2;
         const thirstyNeighbor = [i - 1, i + 1].some(n => n >= 0 && n < V.BEDS && Math.floor(n / 3) === Math.floor(i / 3) && g.beds[n] && g.beds[n].water < 1);
-        if (p.water < cap || thirstyNeighbor) V.water(g, i);
+        if (p.water < cap || thirstyNeighbor) { V.water(g, i); gotaReciente = i; }
         else notice = 'this word and its neighbors already have water — no action spent.';
       }
     } else if (modo === 'luz') {
@@ -716,7 +729,19 @@
       }
     }
     render();
+    if (gotaReciente !== null) { soltarGota(gotaReciente); gotaReciente = null; }
     if (notice) $('guia').textContent = notice;
+  }
+
+  // water you can see: a drop falls on the bed you just watered
+  function soltarGota(i) {
+    const bed = camasEl.children[i];
+    if (!bed) return;
+    const gota = document.createElement('div');
+    gota.className = 'gota-cayendo';
+    gota.setAttribute('aria-hidden', 'true');
+    bed.append(gota);
+    gota.addEventListener('animationend', () => gota.remove());
   }
 
   document.querySelectorAll('#acciones button[data-modo]').forEach(b => {
