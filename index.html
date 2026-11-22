@@ -46,7 +46,12 @@
   .cama:hover:not(:disabled) { border-color: var(--dim); }
   .cama.objetivo, .cama.objetivo:hover:not(:disabled) { border-color: var(--amber); box-shadow: 0 0 6px #e8c87244; }
   .cama.seleccionada { border-color: var(--bright); }
-  .cama .planta { color: var(--txt); font-size: 15px; line-height: 1.15; text-align: center; white-space: pre; margin-bottom: 2px; }
+  .cama .planta { display: block; width: min(120px, 90%); height: 92px; flex-shrink: 0; margin-bottom: 2px; }
+  .cama.growing { background: radial-gradient(ellipse at 50% 80%, #25412455, transparent 70%), var(--panel); }
+  .cama.watered { background: radial-gradient(ellipse at 50% 95%, #285d7066, transparent 70%), var(--panel); }
+  .cama.sunlit { background: radial-gradient(ellipse at 80% 5%, #a68c3444, transparent 80%), var(--panel); }
+  .cama.ailing .planta { color: var(--hurt); }
+  @media (max-width: 760px) { .cama .planta { height: 68px; } }
   .cama .palabra { font-size: 13px; margin-bottom: 3px; }
   .cama .estado { font-size: 11px; color: var(--dim); min-height: 14px; }
   .cama .vacia { color: #22361f; font-size: 13px; padding-bottom: 30px; text-align: center; }
@@ -213,12 +218,37 @@
   const $ = id => document.getElementById(id);
   const camasEl = $('camas'), semillasEl = $('semillas'), registroEl = $('registro');
 
-  const GLIFOS = [
-    [' ', ' ', ' ', ' ', ' . '],
-    [' ', ' ', ' ', ' ,', ' |'],
-    [' ', ' ', " '", ' |', ' |'],
-    [' ', ' o', '\\|', ' |', ' |'],
-  ];
+  // A word grows a body: the silhouette is progress, care is visible around it.
+  function plantPicture(p) {
+    const ns = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('viewBox', '0 0 120 92');
+    svg.setAttribute('aria-hidden', 'true'); svg.classList.add('planta');
+    const add = (tag, attrs) => {
+      const el = document.createElementNS(ns, tag);
+      Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
+      svg.append(el); return el;
+    };
+    const stage = Math.min(p.stage, 3), top = [76, 58, 37, 24][stage];
+    add('ellipse', { cx: 60, cy: 84, rx: 31, ry: 4, fill: p.water ? '#568e9a' : '#4e4430', opacity: .5 });
+    if (!stage) add('ellipse', { cx: 60, cy: 76, rx: 6, ry: 4, fill: 'currentColor', transform: 'rotate(-25 60 76)' });
+    else {
+      add('path', { d: 'M60 82 Q55 60 60 ' + top, fill: 'none', stroke: 'currentColor', 'stroke-width': 2.5, 'stroke-linecap': 'round' });
+      add('path', { d: 'M59 65 Q32 65 38 50 Q55 48 59 65 M59 57 Q83 55 81 41 Q62 42 59 57', fill: 'currentColor', opacity: .8 });
+      if (stage >= 2) add('path', { d: 'M59 42 Q37 41 41 28 Q56 29 59 42 M59 36 Q78 32 75 21 Q62 23 59 36', fill: 'currentColor', opacity: .7 });
+      if (stage === 3) {
+        add('path', { d: 'M60 27 Q44 16 60 8 Q76 16 60 27', fill: '#e8c872' });
+        add('path', { d: 'M60 27 L52 22 M60 27 L68 22', stroke: 'currentColor', 'stroke-width': 2 });
+      }
+    }
+    if (p.water) for (let n = 0; n < Math.min(3, p.water); n++) add('path', { d: 'M' + (14 + n * 10) + ' 71 q-5 7 0 8 q5-1 0-8', fill: '#8ac6d1' });
+    if (p.lit) {
+      add('circle', { cx: 99, cy: 16, r: 7, fill: '#e8c872' });
+      add('path', { d: 'M99 3 V6 M99 26 V29 M86 16 H89 M109 16 H112', stroke: '#e8c872', 'stroke-width': 1.5 });
+    }
+    if (p.sheltered) add('path', { d: 'M19 70 V19 Q60 -3 101 19 V70 M19 20 H101', fill: 'none', stroke: '#b3d7cd', 'stroke-width': 1.5, opacity: .7 });
+    return svg;
+  }
 
   function empezar(codigo) {
     g = V.newGame(codigo);
@@ -254,9 +284,11 @@
       d.setAttribute('aria-label', 'bed ' + (i + 1) + (p ? ', ' + p.word + ', ' + V.STAGES[Math.min(p.stage, 3)] + ', health ' + p.health + ', water ' + p.water + (p.lit ? ', lit' : ', unlit') + (p.sheltered ? ', sheltered' : ', unsheltered') : ', empty'));
       d.className = 'cama' + (injertoSel.includes(i) ? ' seleccionada' : '') + (esObjetivo(p) ? ' objetivo' : '');
       if (p) {
-        const pre = document.createElement('div');
-        pre.className = 'planta'; pre.setAttribute('aria-hidden', 'true');
-        pre.textContent = GLIFOS[Math.min(p.stage, 3)].join('\n');
+        const pre = plantPicture(p);
+        d.classList.add('growing', 'fam-' + p.traits.fam);
+        if (p.water) d.classList.add('watered');
+        if (p.lit) d.classList.add('sunlit');
+        if (p.health <= 2) d.classList.add('ailing');
         const w = document.createElement('div');
         w.className = 'palabra fam-' + p.traits.fam;
         w.textContent = p.word;
