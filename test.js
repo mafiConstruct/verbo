@@ -113,6 +113,14 @@ ok(endings['Silence'] === undefined || endings['Silence'] <= 10, 'silence is rar
   ok(g.beds[0].progress === 3, 'lit ember progressed 3, got ' + g.beds[0].progress);
 }
 {
+  // a lamp lights the whole row for the night
+  const g = V.newGame('lamp-row');
+  V.plantAt(g, 0, 'snow'); V.plantAt(g, 1, 'ivy'); V.plantAt(g, 4, 'peat');
+  V.light(g, 0);
+  ok(g.beds[0].lit && g.beds[1].lit, 'lamp lights row mates');
+  ok(!g.beds[4].lit, 'lamp does not reach another row');
+}
+{
   // a night word shuns the light: lit, it still grows 1 per night
   const g = V.newGame('weather-nightlight');
   V.plantAt(g, 0, 'snow');
