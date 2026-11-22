@@ -161,7 +161,7 @@
     </p>
     <div class="como">
       <p><b>1.</b> Click a glowing garden bed to plant the selected word — or pick another in your pouch first.</p>
-      <p><b>2.</b> Water what you want to grow; light makes it faster. When frost is forecast, shelter your words or they take damage.</p>
+      <p><b>2.</b> Water what you want to grow; light makes it faster. When frost is forecast, shelter your words — fire words suffer most, night words don't mind it.</p>
       <p><b>3.</b> After 14 nights, every word that bloomed becomes your poem.</p>
     </div>
     <div class="fila">
@@ -329,7 +329,10 @@
     } else if (!plants.length) {
       msg = 'the pouch is empty — end the night; the wind brings new words.';
     } else if (g.forecast > 0 && plants.some(p => !p.sheltered)) {
-      msg = 'frost tonight (force ' + g.forecast + '): press shelter, then click each word you want to protect.';
+      const homebody = plants.find(p => !p.sheltered && V.themeOf(p.word, g) === 'night');
+      msg = homebody
+        ? 'frost tonight (force ' + g.forecast + '): «' + homebody.word + '» is at home in it — shelter the others.'
+        : 'frost tonight (force ' + g.forecast + '): press shelter, then click each word you want to protect.';
     } else if (unwatered.length) {
       msg = 'press water, then click «' + unwatered[0].word + '» — a word only grows on watered nights (light makes it faster).';
     } else if (grown.length >= 2 && g.actions >= 2) {
@@ -340,10 +343,17 @@
     $('guia').textContent = msg;
   }
 
+  const THEME_BLURB = {
+    flame: 'a fire word — frost bites it harder',
+    tide: 'a water word — it bears every other dry night',
+    night: 'a night word — at home in the frost',
+    leaf: 'a green word', loam: 'an earth word', wing: 'a winged word', stone: 'a stone word',
+  };
+
   function pista(w) {
     const t = V.traits(w), cost = V.stageCost(t);
     const sed = t.thirst === 0 ? 'none' : t.thirst === 1 ? 'normal' : 'high';
-    $('pista').innerHTML = '«<b>' + w + '</b>» · ' + t.fam + ' family' +
+    $('pista').innerHTML = '«<b>' + w + '</b>» · ' + (THEME_BLURB[V.themeOf(w, g)] || 'a word') +
       ' · thirst ' + sed + ' · resists frost ' + t.hardiness +
       ' · blooms in ~' + (cost * 4) + ' watered nights (' + Math.ceil(cost * 4 / 2) + ' with light)' +
       (g.vigorous[w] ? ' · <b>vigorous</b>' : '');
