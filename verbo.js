@@ -127,7 +127,8 @@
 
   function water(state, bed) {
     // row watering: the chosen bed drinks fully; its row neighbors get a sip
-    state.beds[bed].water = 2;
+    // a water word holds water well: one watering lasts longer
+    state.beds[bed].water = themeOf(state.beds[bed].word, state) === 'tide' ? 3 : 2;
     const row = Math.floor(bed / 3);
     for (const n of [bed - 1, bed + 1]) {
       if (n >= 0 && n < BEDS && Math.floor(n / 3) === row && state.beds[n]) {
@@ -166,26 +167,21 @@
       p.age++;
       // growth
       if (p.water > 0 && p.stage < 4) {
-        p.progress += 1 + (p.lit ? 1 : 0);
+        // a fire word feeds on light: lit, it grows twice as fast again
+        p.progress += 1 + (p.lit ? 1 : 0) + (p.lit && themeOf(p.word, state) === 'flame' ? 1 : 0);
         p.stage = Math.min(4, Math.floor(p.progress / stageCost(p.traits)));
         p.water--;
         p.dry = 0;
       } else if (p.water <= 0 && p.traits.thirst > 0 && p.age >= 2) {
-        p.dry++;
-        // a water word digs deep: it bears every other dry night
-        if (themeOf(p.word, state) === 'tide' && p.dry % 2 === 1) {
-          say(state, '«' + p.word + '» digs deep and finds water.');
-        } else {
-          p.health--;
-          say(state, '«' + p.word + '» went thirsty (−1 health).');
-        }
+        p.health--;
+        say(state, '«' + p.word + '» went thirsty (−1 health).');
       } else if (p.water > 0) { p.water--; p.dry = 0; }
       // frost: night words are at home in it; fire words suffer
       if (frost > 0 && !p.sheltered) {
         const base = Math.max(0, frost - p.traits.hardiness);
         const th = themeOf(p.word, state);
         let dmg = base;
-        if (th === 'night') dmg = Math.max(0, dmg - 2);
+        if (th === 'night') dmg = Math.max(0, dmg - 1);
         else if (th === 'flame') dmg += 1;
         if (dmg > 0) { p.health -= dmg; say(state, 'the frost hit «' + p.word + '» (−' + dmg + ').'); }
         else if (th === 'night' && base > 0) say(state, '«' + p.word + '» is at home in the frost.');
