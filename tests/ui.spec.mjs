@@ -329,3 +329,19 @@ test('empty garden tells a non-plant mode to arm plant before promising glowing 
   await expect(page.locator('#guia')).toContainText('your move: click a glowing bed');
   await expect(page.locator('#guia')).not.toContainText('press plant');
 });
+
+test('legacy poem copy keeps focus on copy so Tab reaches another seed', async ({ page }) => {
+  await beginWithSeed(page, 'marrow', false, 14);
+  await page.click('#noche');
+  await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', { value: undefined, configurable: true }));
+  await page.click('#copiar-poema');
+  await expect(page.locator('#copiar-poema')).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(page.locator('#otra-siembra')).toBeFocused();
+});
+
+test('last-night empty-garden advice does not promise useful future wind', async ({ page }) => {
+  await beginWithSeed(page, 'marrow', false, 14);
+  await expect(page.locator('#guia')).toContainText('none of these words could bloom tonight');
+  await expect(page.locator('#guia')).not.toContainText('wind');
+});
