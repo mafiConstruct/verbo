@@ -14,12 +14,18 @@ is read as a poem. No poem repeats.
 
 Open `index.html` in any browser. No install, no connection needed.
 
+The first seed is already selected and empty beds glow: **click a glowing
+bed to plant**. A guide line above the buttons always names your next move
+and what it does. The armed action shows as a solid bright button, and the
+beds it can touch glow.
+
 - **Plant**: pick a seed from the pouch and an empty bed.
 - **Water**: the chosen bed drinks fully; its row neighbors get a sip.
 - **Give light**: the plant grows twice as fast that night (if watered).
 - **Shelter**: protects from tonight's frost. The forecast is up top.
-- **Graft**: join two stems (stage ≥ 2) and a new, vigorous word is born.
-- You get 3 actions per day. At night, winter does its thing.
+- **Graft**: join two grown stems and a new, vigorous word is born.
+- You get 3 actions per day. At night, winter does its thing. Each new day
+  starts back in plant mode.
 
 The **seed code** reproduces the exact same run: share it and someone else
 tends the same garden.
@@ -37,6 +43,10 @@ to say anything.
 - Reproducible chance: every run grows from its seed code.
 - `node test.js` runs 60+ simulated games checking balance, determinism,
   and that neglect has its own ending.
+- `npm install && npx playwright test` runs the UI regression suite: every
+  test asserts a *visible* change after each tap (glyphs, glow, log lines,
+  day counter), not just that a click executed. Set `CHROME_PATH` to use a
+  system Chrome instead of downloading browsers.
 
 ## Authorship
 
