@@ -260,7 +260,9 @@
   }
 
   function composePoem(state) {
-    const lostNames = [...new Set(state.lost)];
+    // a word that bloomed anywhere is saved, even if another copy of it died:
+    // winter can only keep what never bloomed
+    const lostNames = [...new Set(state.lost)].filter(w => !state.poem.includes(w));
     if (!state.poem.length) {
       const bleak = ['the thaw came.', 'there was nothing to say.'];
       if (lostNames.length) bleak.push(winterKeeps(lostNames));
