@@ -168,7 +168,9 @@
       // growth
       if (p.water > 0 && p.stage < 4) {
         // a fire word feeds on light: lit, it grows twice as fast again
-        p.progress += 1 + (p.lit ? 1 : 0) + (p.lit && themeOf(p.word, state) === 'flame' ? 1 : 0);
+        // a night word shuns the light: being lit does not speed it up
+        const th0 = themeOf(p.word, state);
+        p.progress += 1 + (p.lit && th0 !== 'night' ? 1 : 0) + (p.lit && th0 === 'flame' ? 1 : 0);
         p.stage = Math.min(4, Math.floor(p.progress / stageCost(p.traits)));
         p.water--;
         p.dry = 0;
