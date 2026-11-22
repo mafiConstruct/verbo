@@ -456,3 +456,21 @@ test('the moon waxes across the season: shadow recedes from night 1 toward the t
   const cxNight2 = await page.locator('#luna .luna-sombra').getAttribute('cx');
   expect(parseFloat(cxNight2)).toBeLessThan(parseFloat(cxNight1)); // more of the moon is lit
 });
+
+test('a word the frost takes keeps its withered stem on the bed that night', async ({ page }) => {
+  await begin(page, 'seed-2xk5l0');
+  const bed = page.locator('#camas > .cama').first();
+  await bed.click(); // plant lantern, then neglect it: frost + thirst take it by night 3
+  await page.click('#noche');
+  await page.click('#noche');
+  await page.click('#noche');
+  await expect(page.locator('#registro')).toContainText('«lantern» went dark');
+  await expect(bed).toHaveAttribute('aria-label', /«lantern» went dark here this night/);
+  await expect(bed.locator('svg.planta.marchita')).toBeVisible();
+  await expect(bed.locator('.palabra.marchita-word')).toHaveText('lantern');
+  // replanting retires the withered echo
+  await page.locator('#semillas .semilla', { hasText: 'crow' }).click();
+  await bed.click();
+  await expect(bed).toHaveAttribute('aria-label', /crow, seed/);
+  await expect(bed.locator('svg.planta.marchita')).toHaveCount(0);
+});
