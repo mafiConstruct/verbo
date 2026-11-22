@@ -32,6 +32,7 @@
   header .titulo { color: var(--bright); letter-spacing: 0.4em; font-size: 18px; }
   header .datos { color: var(--dim); font-size: 13px; }
   header .datos b { color: var(--txt); font-weight: normal; }
+  #luna svg { width: 15px; height: 15px; vertical-align: -2px; margin-right: 3px; }
   .pronostico-frio { color: var(--water); }
   .pronostico-calma { color: var(--dim); }
 
@@ -142,7 +143,7 @@
   <header>
     <span class="titulo">WORDHOARD</span>
     <span class="datos">
-      <span id="dia-label">day</span> <b id="dia">1</b><span id="dia-max"> / 14</span> ·
+      <span id="luna"></span><span id="dia-label">day</span> <b id="dia">1</b><span id="dia-max"> / 14</span> ·
       actions <b id="acciones-restantes">●●●</b> ·
       tonight: <b id="pronostico"></b> ·
       seed <b id="codigo"></b>
@@ -245,6 +246,23 @@
     return svg;
   }
 
+  // the 14 nights are a season: the moon waxes from new to full at the thaw
+  function moonPicture(day) {
+    const ns = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.classList.add('luna-svg');
+    const phase = Math.max(0, Math.min(1, (day - 1) / 13)); // night 1 new, night 14 full
+    const add = (tag, attrs) => {
+      const el = document.createElementNS(ns, tag);
+      Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
+      svg.append(el); return el;
+    };
+    add('circle', { cx: 12, cy: 12, r: 8, fill: '#d8d3b8' });
+    add('circle', { cx: 12 - 16 * phase, cy: 12, r: 8, fill: 'var(--bg)', class: 'luna-sombra' });
+    return svg;
+  }
+
   const $ = id => document.getElementById(id);
   const camasEl = $('camas'), semillasEl = $('semillas'), registroEl = $('registro');
 
@@ -327,6 +345,11 @@
     $('dia').textContent = g.over ? 'thaw' : g.day;
     $('dia-label').textContent = g.over ? 'the' : 'night';
     $('dia-max').textContent = g.over ? ' has come' : ' / 14';
+    const lunaEl = $('luna');
+    lunaEl.innerHTML = '';
+    lunaEl.append(moonPicture(Math.min(g.day, 14)));
+    lunaEl.setAttribute('role', 'img');
+    lunaEl.setAttribute('aria-label', g.over ? 'full moon: the thaw' : 'waxing moon, night ' + g.day + ' of 14');
     $('acciones-restantes').textContent = '●'.repeat(g.actions) + '○'.repeat(V.ACTIONS_PER_DAY - g.actions);
     $('codigo').textContent = g.code;
     const focusedKey = document.activeElement && document.activeElement.dataset.focusKey;
