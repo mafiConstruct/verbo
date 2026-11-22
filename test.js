@@ -128,6 +128,36 @@ ok(endings['Silence'] === undefined || endings['Silence'] <= 10, 'silence is rar
   g.forecast = 0; V.endDay(g);
   ok(g.beds[0].progress === 1, 'lit snow progressed 1, got ' + g.beds[0].progress);
 }
+// 8. The poem remembers
+{
+  // a word that took frost and lived is marked
+  const g = V.newGame('scar-test');
+  V.plantAt(g, 0, 'ember');
+  g.forecast = 1; V.endDay(g);
+  ok(g.scarred.ember === true, 'ember carries a scar');
+}
+{
+  // graft records parents
+  const g = V.newGame('parents-test');
+  V.plantAt(g, 0, 'ember'); V.plantAt(g, 1, 'frost');
+  g.beds[0].stage = 2; g.beds[1].stage = 2;
+  const w = V.graft(g, 0, 1);
+  ok(w && g.parents[w] && g.parents[w].join('+') === 'ember+frost', 'parents of ' + w + ': ' + JSON.stringify(g.parents[w]));
+}
+{
+  // a bloomed scarred word gets its own verse
+  const g = V.newGame('scar-poem');
+  V.plantAt(g, 0, 'ember');
+  g.forecast = 1;
+  while (!g.over) {
+    if (g.actions > 0 && g.beds[0]) V.water(g, 0);
+    V.endDay(g);
+    if (g.day > 2) g.forecast = 0;
+  }
+  const hero = g.ending.lines.find(l => l.includes('stood in the frost'));
+  ok(hero && hero.includes('ember'), 'poem names the scarred word: ' + JSON.stringify(g.ending.lines));
+}
+console.log(fails === 0 ? 'MEMORY OK' : 'MEMORY FAILURES: ' + fails);
 console.log(fails === 0 ? 'WEATHER OK' : 'WEATHER FAILURES: ' + fails);
 console.log(fails === 0 ? 'ALL OK' : fails + ' FAILURES');
 process.exit(fails === 0 ? 0 : 1);
