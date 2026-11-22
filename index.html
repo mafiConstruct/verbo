@@ -203,7 +203,7 @@
 (function () {
   'use strict';
   const V = VERBO;
-  let g = null, modo = 'plantar', semillaElegida = null, injertoSel = [];
+  let g = null, modo = 'plantar', semillaElegida = null, injertoSel = [], inspectedPlant = null;
 
   const $ = id => document.getElementById(id);
   const camasEl = $('camas'), semillasEl = $('semillas'), registroEl = $('registro');
@@ -217,7 +217,7 @@
 
   function empezar(codigo) {
     g = V.newGame(codigo);
-    modo = 'plantar'; semillaElegida = g.pouch[0] || null; injertoSel = [];
+    modo = 'plantar'; semillaElegida = g.pouch[0] || null; injertoSel = []; inspectedPlant = null;
     if (semillaElegida) pista(semillaElegida); // the card should name the selected seed from the start
     logPrevio = 0;
     $('pantalla-inicio').classList.add('escondido');
@@ -290,6 +290,12 @@
       s.onclick = () => { semillaElegida = w; modo = 'plantar'; pista(w); render(); };
       semillasEl.append(s);
     });
+
+    // Refresh the last inspected word after growth, loss, or a new night.
+    // A removed plant must never leave a ghost description behind.
+    if (inspectedPlant && g.beds.includes(inspectedPlant)) pista(inspectedPlant.word, inspectedPlant);
+    else if (semillaElegida && g.pouch.includes(semillaElegida)) pista(semillaElegida);
+    else { inspectedPlant = null; $('pista').textContent = 'the pouch is empty — click a planted word to inspect it.'; }
 
     // buttons
     document.querySelectorAll('#acciones button[data-modo]').forEach(b => {
@@ -425,6 +431,7 @@
   };
 
   function pista(w, plant) {
+    inspectedPlant = plant || null;
     const t = V.traits(w), cost = V.stageCost(t);
     const sed = t.thirst === 0 ? 'none' : t.thirst === 1 ? 'normal' : 'high';
     // a planted word has progress already; what matters is what remains
