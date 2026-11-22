@@ -134,6 +134,7 @@
   #tesoro .tesoro-cuenta { color: var(--dim); font-size: 11px; font-style: italic; align-self: center; }
   .cama .planta.eco { filter: drop-shadow(0 0 7px #e8c87255); }
   .cama .palabra.eco-word { color: var(--amber); font-style: italic; }
+  .cama .palabra.marchita-word { color: var(--dim); font-style: italic; }
   .escondido { display: none !important; }
   .nota { color: var(--dim); font-size: 12px; margin-top: 14px; }
 </style>
@@ -225,7 +226,7 @@
 (function () {
   'use strict';
   const V = VERBO;
-  let g = null, modo = 'plantar', semillaElegida = null, injertoSel = [], inspectedPlant = null, bloomEchoes = {};
+  let g = null, modo = 'plantar', semillaElegida = null, injertoSel = [], inspectedPlant = null, bloomEchoes = {}, witherEchoes = {};
   // a bloom is the payoff of the whole loop; it deserves a body too.
   // Golden echo on the bed that night, small flowers in the hoard list.
   // the hoard collects flowers, not just words: the bloom it earned, on its family stem
@@ -326,9 +327,27 @@
     return svg;
   }
 
+  // the stem the frost took: bent, colorless, one leaf fallen — it stays the night
+  function witherEchoPicture() {
+    const ns = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('viewBox', '0 0 120 92');
+    svg.setAttribute('aria-hidden', 'true'); svg.classList.add('planta', 'eco', 'marchita');
+    const add = (tag, attrs) => {
+      const el = document.createElementNS(ns, tag);
+      Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
+      svg.append(el); return el;
+    };
+    add('ellipse', { cx: 60, cy: 84, rx: 31, ry: 4, fill: '#4e4430', opacity: .5 });
+    add('path', { d: 'M60 82 Q58 60 44 52', fill: 'none', stroke: '#7a7264', 'stroke-width': 2.5, 'stroke-linecap': 'round' });
+    add('path', { d: 'M44 52 Q30 50 27 62 Q40 63 44 52', fill: '#7a7264', opacity: .75 });
+    add('ellipse', { cx: 78, cy: 80, rx: 6, ry: 3, fill: '#7a7264', opacity: .45, transform: 'rotate(-20 78 80)' });
+    return svg;
+  }
+
   function empezar(codigo) {
     g = V.newGame(codigo);
-    modo = 'plantar'; semillaElegida = g.pouch[0] || null; injertoSel = []; inspectedPlant = null; bloomEchoes = {};
+    modo = 'plantar'; semillaElegida = g.pouch[0] || null; injertoSel = []; inspectedPlant = null; bloomEchoes = {}; witherEchoes = {};
     if (semillaElegida) pista(semillaElegida); // the card should name the selected seed from the start
     logPrevio = 0;
     $('pantalla-inicio').classList.add('escondido');
@@ -365,7 +384,7 @@
       const d = document.createElement('button');
       d.type = 'button'; d.dataset.focusKey = 'bed:' + i;
       const amenazaHelada = !!p && g.forecast > 0 && V.frostDamage(g, p) > 0;
-      d.setAttribute('aria-label', 'bed ' + (i + 1) + (p ? ', ' + p.word + ', ' + V.STAGES[Math.min(p.stage, 3)] + ', health ' + p.health + ', water ' + p.water + (p.lit ? ', lit' : ', unlit') + (p.sheltered ? ', sheltered' : ', unsheltered') + (p && amenazaHelada ? (p.sheltered ? ', frost held off by the shelter' : ', frost threatens it tonight') : '') : bloomEchoes[i] ? ', empty — «' + bloomEchoes[i] + '» bloomed here and is safe in the hoard' : ', empty'));
+      d.setAttribute('aria-label', 'bed ' + (i + 1) + (p ? ', ' + p.word + ', ' + V.STAGES[Math.min(p.stage, 3)] + ', health ' + p.health + ', water ' + p.water + (p.lit ? ', lit' : ', unlit') + (p.sheltered ? ', sheltered' : ', unsheltered') + (p && amenazaHelada ? (p.sheltered ? ', frost held off by the shelter' : ', frost threatens it tonight') : '') : bloomEchoes[i] ? ', empty — «' + bloomEchoes[i] + '» bloomed here and is safe in the hoard' : witherEchoes[i] ? ', empty — «' + witherEchoes[i] + '» went dark here this night' : ', empty'));
       d.className = 'cama' + (injertoSel.includes(i) ? ' seleccionada' : '') + (esObjetivo(p) ? ' objetivo' : '');
       if (p) {
         const pre = plantPicture(p, amenazaHelada);
@@ -398,6 +417,17 @@
         const st = document.createElement('div');
         st.className = 'estado';
         st.textContent = 'safe in the hoard';
+        d.append(w, st);
+      } else if (witherEchoes[i]) {
+        // the bed where the frost won keeps the withered stem this night:
+        // the loss stays where the player can see it before the bed frees up
+        d.append(witherEchoPicture());
+        const w = document.createElement('div');
+        w.className = 'palabra marchita-word';
+        w.textContent = witherEchoes[i];
+        const st = document.createElement('div');
+        st.className = 'estado';
+        st.textContent = 'went dark this night';
         d.append(w, st);
       } else {
         const v = document.createElement('div');
@@ -625,7 +655,7 @@
       if (!semillaElegida) { semillaElegida = g.pouch[0]; if (!semillaElegida) return; }
       if (g.pouch.includes(semillaElegida) && g.actions > 0) {
         V.plantAt(g, i, semillaElegida); semillaElegida = g.pouch[0] || null;
-        delete bloomEchoes[i]; // a fresh planting retires the echo
+        delete bloomEchoes[i]; delete witherEchoes[i]; // a fresh planting retires the echo
         if (semillaElegida) pista(semillaElegida); // keep the card on the selected seed
       }
     } else if (modo === 'regar') {
@@ -675,8 +705,10 @@
     const logMark = g.log.length;
     V.endDay(g);
     bloomEchoes = {};
+    witherEchoes = {};
     antes.forEach((w, i) => {
       if (w && !g.beds[i] && g.log.slice(logMark).some(l => l.includes('«' + w + '»') && l.includes('bloomed'))) bloomEchoes[i] = w;
+      if (w && !g.beds[i] && g.log.slice(logMark).some(l => l.includes('«' + w + '»') && l.includes('went dark'))) witherEchoes[i] = w;
     });
     modo = 'plantar'; injertoSel = []; render();
   };
@@ -739,7 +771,7 @@
         if (p && !p.sheltered && V.frostDamage(g, p) > 0 && p.health <= 2) V.shelter(g, i);
       }
       for (let i = 0; i < V.BEDS && g.actions > 0; i++) {
-        if (!g.beds[i] && g.pouch.length && g.beds.filter(Boolean).length < 6) { V.plantAt(g, i, g.pouch[0]); delete bloomEchoes[i]; }
+        if (!g.beds[i] && g.pouch.length && g.beds.filter(Boolean).length < 6) { V.plantAt(g, i, g.pouch[0]); delete bloomEchoes[i]; delete witherEchoes[i]; }
       }
       V.endDay(g);
     }
