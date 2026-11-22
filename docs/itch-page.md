@@ -38,7 +38,8 @@ with no minimum, in keeping with the gesture of the game. Do not set any
 amount without his OK.
 
 ## Assets
-- Cover: `cover.png` (630×500) in this repo.
+- Cover: render `cover.html` at 630×500 and screenshot it
+  (e.g. headless Chrome) — the source lives in this repo.
 - Gallery screenshots: title screen, mid-run, ending screen with poem.
 - Package to upload: zip with `index.html` + `verbo.js` at the root
   (build: `zip -j wordhoard.zip index.html verbo.js`).
