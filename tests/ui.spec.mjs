@@ -208,6 +208,7 @@ test('empty-garden advice distinguishes one late seed from an entirely late pouc
 
 test('beds and seeds work with keyboard and keep focus across redraws', async ({ page }) => {
   await begin(page, 'keyboard-garden');
+  await expect(page.getByRole('button', { name: 'bed 1, empty', exact: true })).toBeFocused();
   const seed = page.locator('.semilla').nth(1);
   const word = (await seed.textContent()).trim();
   await seed.focus();
