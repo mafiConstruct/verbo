@@ -406,9 +406,10 @@
         : 'the thaw will come before any of these could bloom — only the wind could still bring a fast word. end the night →';
     } else if (!plants.length && g.pouch.length) {
       const sel = semillaElegida || g.pouch[0];
+      const nextMove = modo === 'plantar' ? 'click a glowing bed' : 'press plant, then click a glowing bed';
       msg = g.vigorous[sel]
-        ? '«' + sel + '» was born — click a glowing bed to plant it; a vigorous word starts strong.'
-        : 'your move: click a glowing bed to plant «' + sel + '».';
+        ? '«' + sel + '» was born — ' + nextMove + ' to plant it; a vigorous word starts strong.'
+        : 'your move: ' + nextMove + ' to plant «' + sel + '».';
     } else if (!plants.length) {
       msg = 'the pouch is empty — end the night; the wind brings new words.';
     } else if (g.forecast > 0 && needsShelter.length) {
