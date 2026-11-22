@@ -364,6 +364,8 @@
       msg = 'frost tonight (force ' + g.forecast + '), but every word out there can take it — no shelter needed.';
     } else if (unwatered.length) {
       msg = 'press water, then click «' + unwatered[0].word + '» — a word only grows on watered nights (light makes it faster).';
+    } else if (modo === 'plantar' && semillaElegida && g.vigorous[semillaElegida] && g.pouch.includes(semillaElegida) && g.actions > 0 && g.beds.some(b => !b) && !muyTarde(semillaElegida)) {
+      msg = '«' + semillaElegida + '» was born — click a glowing bed to plant it; a vigorous word starts strong.';
     } else if (grown.length >= 2 && g.actions >= 2) {
       msg = 'all tended. two grown words can merge into a new one with graft (2) — or end the night →';
     } else {
@@ -417,7 +419,11 @@
       else if (injertoSel.includes(i)) { injertoSel = injertoSel.filter(x => x !== i); }
       else {
         injertoSel.push(i);
-        if (injertoSel.length === 2 && g.actions >= 2) { V.graft(g, injertoSel[0], injertoSel[1]); injertoSel = []; }
+        if (injertoSel.length === 2 && g.actions >= 2) {
+          const born = V.graft(g, injertoSel[0], injertoSel[1]); injertoSel = [];
+          // hand the newborn to the player: already selected, plant mode armed
+          semillaElegida = born; modo = 'plantar';
+        }
         else if (injertoSel.length === 2) injertoSel = [i];
       }
     }
