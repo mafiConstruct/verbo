@@ -384,3 +384,19 @@ test('action buttons expose which tool is armed and reset to plant each night', 
   await expect(plant).toHaveAttribute('aria-pressed', 'true');
   await expect(water).toHaveAttribute('aria-pressed', 'false');
 });
+
+test('word bodies and care marks follow growth and nightly care', async ({ page }) => {
+  await beginWithSeed(page, 'ash');
+  const bed = page.locator('#camas > .cama').first();
+  await bed.click();
+  await expect(bed.locator('svg.planta')).toBeVisible();
+  const seedBody = await bed.locator('svg').innerHTML();
+  await page.click('button[data-modo="regar"]'); await bed.click();
+  await expect(bed).toHaveClass(/watered/);
+  await page.click('button[data-modo="luz"]'); await bed.click();
+  await expect(bed).toHaveClass(/sunlit/);
+  await page.click('#noche');
+  await expect(bed.locator('svg')).not.toHaveJSProperty('innerHTML', seedBody);
+  await expect(bed).not.toHaveClass(/sunlit/);
+  await expect(bed.locator('.palabra')).toHaveText('ash');
+});
