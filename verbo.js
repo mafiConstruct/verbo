@@ -259,15 +259,22 @@
       const t = themeOf(w, state);
       (byTheme[t] = byTheme[t] || []).push(w);
     }
-    for (const t of Object.keys(byTheme).sort((a, b) => byTheme[b].length - byTheme[a].length)) {
-      const group = byTheme[t].sort((a, b) => a.length - b.length);
-      let verse = [], letters = 0;
+    // verses follow theme adjacency: a theme with enough words holds its own verse;
+    // small neighboring themes share one. Budget: 3 words and 16 letters per verse.
+    const THEME_ORDER = ['flame', 'tide', 'leaf', 'loam', 'night', 'wing', 'stone'];
+    let verse = [], letters = 0;
+    const pushVerse = () => { if (verse.length) { themed.push(verse.join(', ')); verse = []; letters = 0; } };
+    for (const t of THEME_ORDER) {
+      const group = byTheme[t];
+      if (!group) continue;
+      group.sort((a, b) => a.length - b.length);
+      if (verse.length && (verse.length + group.length > 3 || letters + group.join('').length > 16)) pushVerse();
       for (const w of group) {
-        if (verse.length === 3 || letters + w.length > 16) { themed.push(verse.join(', ')); verse = []; letters = 0; }
+        if (verse.length === 3 || letters + w.length > 16) pushVerse();
         verse.push(w); letters += w.length;
       }
-      if (verse.length) themed.push(verse.join(', '));
     }
+    pushVerse();
     const bornLast = line => {
       const ws = line.split(', ');
       if (!ws.some(w => state.vigorous[w])) return line;
