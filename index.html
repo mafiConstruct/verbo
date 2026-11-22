@@ -62,6 +62,19 @@
     100% { transform: translateY(64px) scaleY(.4); opacity: 0; }
   }
   @media (prefers-reduced-motion: reduce) { .cama .gota-cayendo { display: none; } }
+  #camas.paso-noche { animation: pasar-noche .85s ease-in-out; }
+  #camas.paso-noche-fria { animation-name: pasar-noche-fria; }
+  @keyframes pasar-noche {
+    0% { filter: brightness(1); }
+    35% { filter: brightness(.55) saturate(.8); }
+    100% { filter: brightness(1); }
+  }
+  @keyframes pasar-noche-fria {
+    0% { filter: brightness(1); }
+    35% { filter: brightness(.5) saturate(.75) hue-rotate(14deg); }
+    100% { filter: brightness(1); }
+  }
+  @media (prefers-reduced-motion: reduce) { #camas.paso-noche, #camas.paso-noche-fria { animation: none; } }
   .cama.sunlit { background: radial-gradient(ellipse at 80% 5%, #a68c3444, transparent 80%), var(--panel); }
   .cama.ailing .planta { color: var(--hurt); }
   /* frost is the antagonist: on frost nights the cold is on the garden itself */
@@ -761,7 +774,18 @@
       if (w && !g.beds[i] && g.log.slice(logMark).some(l => l.includes('«' + w + '»') && l.includes('went dark'))) witherEchoes[i] = w;
     });
     modo = 'plantar'; injertoSel = []; render();
+    marcarPasoNoche();
   };
+
+  // the night passes in a blink: the garden dips dark and comes back in the
+  // new night's light — colder when frost is on the forecast
+  function marcarPasoNoche() {
+    if (g.over) return; // the thaw screen is its own reveal
+    camasEl.classList.remove('paso-noche', 'paso-noche-fria');
+    void camasEl.offsetWidth; // restart the animation on back-to-back nights
+    camasEl.classList.add('paso-noche');
+    if (g.forecast > 0) camasEl.classList.add('paso-noche-fria');
+  }
   $('comenzar').onclick = () => empezar($('entrada-siembra').value);
   $('entrada-siembra').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); empezar($('entrada-siembra').value); } });
   // the poem is the payoff of the run; let the player take it with them
