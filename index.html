@@ -389,7 +389,7 @@
     } else if (modo === 'regar' && unwatered.length) {
       msg = 'water armed — now click one of the glowing words; it grows tonight.';
     } else if (modo === 'luz' && lightable.length) {
-      msg = 'light armed — click a glowing word; its lamp covers the whole row for tonight. lit and watered, a word grows twice as fast.';
+      msg = 'light armed — click a glowing word; its lamp covers the whole row for tonight. watered words grow faster, and fire words get the biggest boost.';
     } else if (modo === 'luz' && plants.some(p => !p.lit)) {
       msg = 'only night words are unlit, and they shun the light — the lamp would not help them.';
     } else if (modo === 'abrigar' && needsShelter.length) {
@@ -419,7 +419,8 @@
     } else if (g.forecast > 0 && plants.some(p => !p.sheltered)) {
       msg = 'frost tonight (force ' + g.forecast + '), but every word out there can take it — no shelter needed.';
     } else if (unwatered.length) {
-      msg = 'press water, then click «' + unwatered[0].word + '» — a word only grows on watered nights (light makes it faster).';
+      msg = 'press water, then click «' + unwatered[0].word + '» — a word only grows on watered nights' +
+        (V.themeOf(unwatered[0].word, g) === 'night' ? '; this night word does not need a lamp.' : ' (light makes it faster).');
     } else if (modo === 'plantar' && !g.pouch.length) {
       msg = 'the pouch is empty — the wind brings new words; tend what grows or end the night →';
     } else if (modo === 'plantar' && semillaElegida && !g.beds.some(b => !b)) {
@@ -470,6 +471,7 @@
   function clicCama(i) {
     if (g.over) return;
     const p = g.beds[i];
+    let notice = null;
     if (modo === 'plantar') {
       if (p) { pista(p.word, p); render(); return; } // inspecting a planted word: what does it need, how close is it
       if (!semillaElegida) { semillaElegida = g.pouch[0]; if (!semillaElegida) return; }
@@ -478,11 +480,24 @@
         if (semillaElegida) pista(semillaElegida); // keep the card on the selected seed
       }
     } else if (modo === 'regar') {
-      if (p && g.actions > 0) V.water(g, i);
+      if (p && g.actions > 0) {
+        const cap = V.themeOf(p.word, g) === 'tide' ? 3 : 2;
+        const thirstyNeighbor = [i - 1, i + 1].some(n => n >= 0 && n < V.BEDS && Math.floor(n / 3) === Math.floor(i / 3) && g.beds[n] && g.beds[n].water < 1);
+        if (p.water < cap || thirstyNeighbor) V.water(g, i);
+        else notice = 'this word and its neighbors already have water — no action spent.';
+      }
     } else if (modo === 'luz') {
-      if (p && g.actions > 0) V.light(g, i);
+      if (p && g.actions > 0) {
+        const row = Math.floor(i / 3) * 3;
+        const helps = g.beds.slice(row, row + 3).some(q => q && !q.lit && V.themeOf(q.word, g) !== 'night');
+        if (helps) V.light(g, i);
+        else notice = 'no word in this row needs more light tonight — no action spent.';
+      }
     } else if (modo === 'abrigar') {
-      if (p && g.actions > 0) V.shelter(g, i);
+      if (p && g.actions > 0) {
+        if (!p.sheltered && V.frostDamage(g, p) > 0) V.shelter(g, i);
+        else notice = 'this word is already safe from tonight\'s frost — no action spent.';
+      }
     } else if (modo === 'injertar') {
       if (!p || p.stage < 2) { injertoSel = []; }
       else if (injertoSel.includes(i)) { injertoSel = injertoSel.filter(x => x !== i); }
@@ -497,6 +512,7 @@
       }
     }
     render();
+    if (notice) $('guia').textContent = notice;
   }
 
   document.querySelectorAll('#acciones button[data-modo]').forEach(b => {
