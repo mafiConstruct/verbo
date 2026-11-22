@@ -594,6 +594,19 @@ test('giving light flashes a warm lamp over the whole row', async ({ page }) => 
   await expect(beds.nth(0).locator('.flash-lampara')).toHaveCount(0);
 });
 
+test('a word the frost takes is closed in by the cold at dawn', async ({ page }) => {
+  await begin(page, 'seed-2xk5l0');
+  const bed = page.locator('#camas > .cama').first();
+  await bed.click(); // plant lantern, then neglect it
+  for (let n = 0; n < 3; n++) {
+    await page.click('#noche');
+    if (n < 2) await expect(bed.locator('.flash-escarcha')).toHaveCount(0); // still alive, no cold
+  }
+  await expect(bed).toHaveAttribute('aria-label', /went dark here this night/);
+  await expect(bed.locator('.flash-escarcha')).toHaveCount(1); // the cold closes in
+  await expect(bed.locator('.flash-escarcha')).toHaveCount(0, { timeout: 4000 }); // and lifts
+});
+
 test('ending the night blinks the garden into the new night', async ({ page }) => {
   await beginWithSeed(page, 'lantern');
   await page.locator('#camas > .cama').first().click(); // plant lantern
