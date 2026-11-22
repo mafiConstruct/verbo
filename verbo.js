@@ -217,7 +217,9 @@
       if (p && p.stage >= 4) {
         state.poem.push(p.word);
         state.bloomed++;
-        state.pouch.push(p.word, p.word);
+        // one bloom, one seed back: replanting a saved word is a choice,
+        // not a way to fill the garden with copies of it
+        state.pouch.push(p.word);
         state.beds[i] = null;
         say(state, tag(p, i) + ' bloomed. The word is safe now.');
       }
