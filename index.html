@@ -183,6 +183,7 @@
     <div class="poema" id="final-poema"></div>
     <div class="stats" id="final-stats"></div>
     <div class="fila">
+      <button id="copiar-poema">copy the poem</button>
       <button id="otra-siembra">another seed</button>
       <button id="repetir-siembra">replay this seed</button>
     </div>
@@ -418,6 +419,27 @@
   $('noche').onclick = () => { if (!g.over) { V.endDay(g); modo = 'plantar'; injertoSel = []; render(); } };
   $('comenzar').onclick = () => empezar($('entrada-siembra').value);
   $('entrada-siembra').addEventListener('keydown', e => { if (e.key === 'Enter') empezar($('entrada-siembra').value); });
+  // the poem is the payoff of the run; let the player take it with them
+  $('copiar-poema').onclick = async () => {
+    const e = g.ending, b = $('copiar-poema');
+    const lines = [e.title];
+    if (e.subtitle) lines.push(e.subtitle);
+    lines.push('', ...e.lines, '',
+      'you survived ' + e.days + ' nights · ' + e.bloomed + ' words bloomed · ' +
+      e.lost + ' lost · ' + e.grafts + ' grafts · diversity ' + e.diversity + '/4',
+      'seed: ' + e.code + ' — WORDHOARD');
+    const text = lines.join('\n');
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) await navigator.clipboard.writeText(text);
+      else {
+        const ta = document.createElement('textarea');
+        ta.value = text; document.body.append(ta); ta.select();
+        document.execCommand('copy'); ta.remove();
+      }
+      b.textContent = 'copied — it\'s yours';
+    } catch (err) { b.textContent = 'copy failed — select the poem by hand'; }
+    setTimeout(() => { b.textContent = 'copy the poem'; }, 2200);
+  };
   $('otra-siembra').onclick = () => { $('pantalla-final').classList.add('escondido'); $('pantalla-inicio').classList.remove('escondido'); $('entrada-siembra').value = ''; };
   $('repetir-siembra').onclick = () => empezar(g.code);
 
