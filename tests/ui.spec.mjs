@@ -400,3 +400,28 @@ test('word bodies and care marks follow growth and nightly care', async ({ page 
   await expect(bed).not.toHaveClass(/sunlit/);
   await expect(bed.locator('.palabra')).toHaveText('ash');
 });
+
+test('a bloom keeps its flower on the bed that night and the hoard shows flowers', async ({ page }) => {
+  await begin(page, 'seed-2xk5l0');
+  const bed = page.locator('#camas > .cama').first();
+  for (let n = 0; n < 3; n++) {
+    if (n === 0) await bed.click(); // plant lantern, the auto-selected first seed
+    await page.click('button[data-modo="regar"]');
+    await bed.click();
+    await page.click('button[data-modo="luz"]');
+    await bed.click();
+    await page.click('#noche');
+  }
+  // the payoff stays where the player can see it: golden echo on the bed
+  await expect(bed).toHaveAttribute('aria-label', /bloomed here and is safe in the hoard/);
+  await expect(bed.locator('svg.planta.eco')).toBeVisible();
+  await expect(bed.locator('.palabra')).toHaveText('lantern');
+  // and the hoard is a visible collection, not only words
+  await expect(page.locator('#tesoro .flor svg')).toHaveCount(1);
+  await expect(page.locator('#tesoro')).toContainText('«lantern»');
+  // replanting the same word in that bed retires the echo
+  await page.locator('#semillas .semilla', { hasText: 'lantern' }).click();
+  await bed.click();
+  await expect(bed).toHaveAttribute('aria-label', /lantern, seed/);
+  await expect(bed.locator('svg.planta.eco')).toHaveCount(0);
+});
