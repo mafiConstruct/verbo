@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>VERBO — un invernadero de palabras</title>
+<title>WORDHOARD — a greenhouse of words</title>
 <style>
   :root {
     --bg: #0a0f0a;
@@ -14,7 +14,7 @@
     --bright: #d7ffd2;
     --amber: #e8c872;
     --hurt: #e07a5f;
-    --luz: #e8e2a0; --agua: #8ac6d1; --tierra: #c8a06a; --piedra: #a0a8a0;
+    --light: #e8e2a0; --water: #8ac6d1; --earth: #c8a06a; --stone: #a0a8a0;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; }
@@ -29,10 +29,10 @@
     display: flex; justify-content: space-between; align-items: baseline;
     border-bottom: 1px solid var(--line); padding-bottom: 8px; margin-bottom: 10px;
   }
-  header .titulo { color: var(--bright); letter-spacing: 0.5em; font-size: 18px; }
+  header .titulo { color: var(--bright); letter-spacing: 0.4em; font-size: 18px; }
   header .datos { color: var(--dim); font-size: 13px; }
   header .datos b { color: var(--txt); font-weight: normal; }
-  .pronostico-frio { color: var(--agua); }
+  .pronostico-frio { color: var(--water); }
   .pronostico-calma { color: var(--dim); }
 
   main { display: flex; gap: 12px; }
@@ -49,8 +49,8 @@
   .cama .palabra { font-size: 13px; margin-bottom: 3px; }
   .cama .estado { font-size: 11px; color: var(--dim); min-height: 14px; }
   .cama .vacia { color: #22361f; font-size: 13px; padding-bottom: 30px; text-align: center; }
-  .fam-luz { color: var(--luz); } .fam-agua { color: var(--agua); }
-  .fam-tierra { color: var(--tierra); } .fam-piedra { color: var(--piedra); }
+  .fam-light { color: var(--light); } .fam-water { color: var(--water); }
+  .fam-earth { color: var(--earth); } .fam-stone { color: var(--stone); }
 
   #lateral { flex: 1; display: flex; flex-direction: column; gap: 8px; max-width: 330px; }
   .caja { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 8px 10px; }
@@ -70,7 +70,7 @@
   button:hover:not(:disabled) { border-color: var(--dim); color: var(--bright); }
   button.activo { border-color: var(--bright); color: var(--bright); }
   button:disabled { opacity: 0.35; cursor: default; }
-  #noche { border-color: var(--agua); color: var(--agua); }
+  #noche { border-color: var(--water); color: var(--water); }
   #noche:hover:not(:disabled) { border-color: #bfe6ee; color: #bfe6ee; }
 
   #registro { height: 150px; overflow-y: auto; font-size: 12.5px; line-height: 1.5; }
@@ -83,7 +83,7 @@
     display: flex; align-items: center; justify-content: center; z-index: 10;
   }
   .overlay .tarjeta { max-width: 560px; padding: 30px; text-align: center; }
-  .overlay h1 { letter-spacing: 0.6em; color: var(--bright); font-size: 34px; margin: 0 0 4px; }
+  .overlay h1 { letter-spacing: 0.5em; color: var(--bright); font-size: 34px; margin: 0 0 4px; }
   .overlay h2 { color: var(--amber); font-weight: normal; font-size: 20px; margin: 0 0 18px; letter-spacing: 0.1em; }
   .overlay .sub { color: var(--dim); font-size: 13px; margin-bottom: 26px; letter-spacing: 0.2em; }
   .overlay p.intro { line-height: 1.8; font-size: 15px; }
@@ -101,35 +101,35 @@
 <body>
 <div id="app" class="escondido">
   <header>
-    <span class="titulo">VERBO</span>
+    <span class="titulo">WORDHOARD</span>
     <span class="datos">
-      <span id="dia-label">día</span> <b id="dia">1</b><span id="dia-max"> / 14</span> ·
-      acciones <b id="acciones-restantes">●●●</b> ·
-      esta noche: <b id="pronostico"></b> ·
-      siembra <b id="codigo"></b>
+      <span id="dia-label">day</span> <b id="dia">1</b><span id="dia-max"> / 14</span> ·
+      actions <b id="acciones-restantes">●●●</b> ·
+      tonight: <b id="pronostico"></b> ·
+      seed <b id="codigo"></b>
     </span>
   </header>
   <main>
     <div id="camas"></div>
     <div id="lateral">
       <div class="caja" id="bolsa">
-        <h3>bolsa de semillas</h3>
+        <h3>seed pouch</h3>
         <div id="semillas"></div>
-        <div id="pista">elegí una semilla para conocerla.</div>
+        <div id="pista">choose a seed to know it.</div>
       </div>
       <div class="caja">
-        <h3>acciones</h3>
+        <h3>actions</h3>
         <div id="acciones">
-          <button data-modo="plantar">plantar</button>
-          <button data-modo="regar">regar</button>
-          <button data-modo="luz">dar luz</button>
-          <button data-modo="abrigar">abrigar</button>
-          <button data-modo="injertar">injertar (2)</button>
-          <button id="noche">pasar la noche →</button>
+          <button data-modo="plantar">plant</button>
+          <button data-modo="regar">water</button>
+          <button data-modo="luz">give light</button>
+          <button data-modo="abrigar">shelter</button>
+          <button data-modo="injertar">graft (2)</button>
+          <button id="noche">end the night →</button>
         </div>
       </div>
       <div class="caja">
-        <h3>registro</h3>
+        <h3>log</h3>
         <div id="registro"></div>
       </div>
     </div>
@@ -138,20 +138,20 @@
 
 <div class="overlay" id="pantalla-inicio">
   <div class="tarjeta">
-    <h1>VERBO</h1>
-    <div class="sub">un invernadero de palabras</div>
+    <h1>WORDHOARD</h1>
+    <div class="sub">a greenhouse of words</div>
     <p class="intro">
-      Quedan catorce noches de invierno.<br>
-      La bóveda guarda las últimas palabras.<br>
-      Cuidalas: son lo único que crece acá.
+      Fourteen nights of winter remain.<br>
+      The vault holds the last words.<br>
+      Tend them: they are the only thing that grows here.
     </p>
     <div class="fila">
-      <input id="entrada-siembra" placeholder="código de siembra (opcional)">
-      <button id="comenzar">comenzar</button>
+      <input id="entrada-siembra" placeholder="seed code (optional)">
+      <button id="comenzar">begin</button>
     </div>
     <div class="nota">
-      regar también humedece las camas vecinas de la hilera · injertar dos tallos crea una palabra nueva ·
-      lo que florece queda en el poema del deshielo
+      watering also dampens the neighboring beds in the row · grafting two stems
+      grows a word that never existed · whatever blooms stays in the thaw poem
     </div>
   </div>
 </div>
@@ -162,8 +162,8 @@
     <div class="poema" id="final-poema"></div>
     <div class="stats" id="final-stats"></div>
     <div class="fila">
-      <button id="otra-siembra">otra siembra</button>
-      <button id="repetir-siembra">repetir esta siembra</button>
+      <button id="otra-siembra">another seed</button>
+      <button id="repetir-siembra">replay this seed</button>
     </div>
   </div>
 </div>
@@ -192,22 +192,22 @@
     $('pantalla-inicio').classList.add('escondido');
     $('pantalla-final').classList.add('escondido');
     $('app').classList.remove('escondido');
-    V && render(true);
+    render(true);
   }
 
   let logPrevio = 0;
 
   function render(primero) {
-    $('dia').textContent = g.over ? 'deshielo' : g.day;
-    $('dia-label').textContent = g.over ? 'llegó el' : 'día';
-    $('dia-max').textContent = g.over ? '' : ' / 14';
+    $('dia').textContent = g.over ? 'thaw' : g.day;
+    $('dia-label').textContent = g.over ? 'the' : 'day';
+    $('dia-max').textContent = g.over ? ' has come' : ' / 14';
     $('acciones-restantes').textContent = '●'.repeat(g.actions) + '○'.repeat(V.ACTIONS_PER_DAY - g.actions);
     $('codigo').textContent = g.code;
     const pr = $('pronostico');
-    if (g.forecast > 0) { pr.textContent = 'helada de fuerza ' + g.forecast; pr.className = 'pronostico-frio'; }
-    else { pr.textContent = 'noche en calma'; pr.className = 'pronostico-calma'; }
+    if (g.forecast > 0) { pr.textContent = 'frost, force ' + g.forecast; pr.className = 'pronostico-frio'; }
+    else { pr.textContent = 'calm night'; pr.className = 'pronostico-calma'; }
 
-    // camas
+    // beds
     camasEl.innerHTML = '';
     g.beds.forEach((p, i) => {
       const d = document.createElement('div');
@@ -222,10 +222,10 @@
         const st = document.createElement('div');
         st.className = 'estado';
         const marcas = [];
-        marcas.push('salud ' + '•'.repeat(Math.max(0, p.health)));
+        marcas.push('health ' + '•'.repeat(Math.max(0, p.health)));
         if (p.water > 0) marcas.push('≈' + p.water);
         if (p.lit) marcas.push('◉');
-        if (p.sheltered) marcas.push('abrigo');
+        if (p.sheltered) marcas.push('sheltered');
         st.textContent = marcas.join(' · ');
         d.append(pre, w, st);
       } else {
@@ -241,9 +241,9 @@
       camasEl.append(d);
     });
 
-    // semillas
+    // seeds
     semillasEl.innerHTML = '';
-    if (!g.pouch.length) semillasEl.innerHTML = '<span style="color:var(--dim);font-size:12px">vacía — esperá al viento</span>';
+    if (!g.pouch.length) semillasEl.innerHTML = '<span style="color:var(--dim);font-size:12px">empty — wait for the wind</span>';
     g.pouch.forEach(w => {
       const s = document.createElement('span');
       s.className = 'semilla fam-' + V.familyOf(w) + (w === semillaElegida ? ' elegida' : '') + (g.vigorous[w] ? ' vigorosa' : '');
@@ -252,7 +252,7 @@
       semillasEl.append(s);
     });
 
-    // botones
+    // buttons
     document.querySelectorAll('#acciones button[data-modo]').forEach(b => {
       const m = b.dataset.modo;
       b.classList.toggle('activo', modo === m);
@@ -261,14 +261,14 @@
     });
     $('noche').disabled = g.over;
 
-    // registro
+    // log
     registroEl.innerHTML = '';
     g.log.forEach((linea, idx) => {
       const div = document.createElement('div');
       const nueva = idx >= logPrevio;
       div.className = nueva ? 'nueva' : '';
-      if (/se apagó|pasó sed|golpeó/.test(linea)) div.className += ' mala';
-      if (/floreció|nació/.test(linea)) div.className += ' buena';
+      if (/went dark|went thirsty|frost hit/.test(linea)) div.className += ' mala';
+      if (/bloomed|was born/.test(linea)) div.className += ' buena';
       div.textContent = linea;
       registroEl.append(div);
     });
@@ -280,11 +280,11 @@
 
   function pista(w) {
     const t = V.traits(w), cost = V.stageCost(t);
-    const sed = t.thirst === 0 ? 'ninguna' : t.thirst === 1 ? 'normal' : 'mucha';
-    $('pista').innerHTML = '«<b>' + w + '</b>» · familia ' + t.fam +
-      ' · sed ' + sed + ' · resiste helada ' + t.hardiness +
-      ' · florece en ~' + (cost * 4) + ' noches de riego (' + Math.ceil(cost * 4 / 2) + ' con luz)' +
-      (g.vigorous[w] ? ' · <b>vigorosa</b>' : '');
+    const sed = t.thirst === 0 ? 'none' : t.thirst === 1 ? 'normal' : 'high';
+    $('pista').innerHTML = '«<b>' + w + '</b>» · ' + t.fam + ' family' +
+      ' · thirst ' + sed + ' · resists frost ' + t.hardiness +
+      ' · blooms in ~' + (cost * 4) + ' watered nights (' + Math.ceil(cost * 4 / 2) + ' with light)' +
+      (g.vigorous[w] ? ' · <b>vigorous</b>' : '');
   }
 
   function clicCama(i) {
@@ -319,6 +319,17 @@
   $('entrada-siembra').addEventListener('keydown', e => { if (e.key === 'Enter') empezar($('entrada-siembra').value); });
   $('otra-siembra').onclick = () => { $('pantalla-final').classList.add('escondido'); $('pantalla-inicio').classList.remove('escondido'); $('entrada-siembra').value = ''; };
   $('repetir-siembra').onclick = () => empezar(g.code);
+
+  function mostrarFinal() {
+    const e = g.ending;
+    $('final-titulo').textContent = e.title;
+    $('final-poema').innerHTML = e.lines.map(l => '<div>' + l + '</div>').join('');
+    $('final-stats').innerHTML =
+      'you survived ' + e.days + ' nights · ' + e.bloomed + ' words bloomed · ' +
+      e.grafts + ' grafts · diversity ' + e.diversity + '/4<br>seed: ' + e.code;
+    $('pantalla-final').classList.remove('escondido');
+  }
+
   if (location.hash.startsWith('#demo')) {
     const m = location.hash.match(/#demo-?(\d+)?/);
     const noches = m && m[1] ? parseInt(m[1], 10) : 0;
@@ -338,16 +349,6 @@
       V.endDay(g);
     }
     render();
-  }
-
-  function mostrarFinal() {
-    const e = g.ending;
-    $('final-titulo').textContent = e.title;
-    $('final-poema').innerHTML = e.lines.map(l => '<div>' + l + '</div>').join('');
-    $('final-stats').innerHTML =
-      'sobreviviste ' + e.days + ' noches · ' + e.bloomed + ' palabras florecieron · ' +
-      e.grafts + ' injertos · diversidad ' + e.diversity + '/4<br>siembra: ' + e.code;
-    $('pantalla-final').classList.remove('escondido');
   }
 })();
 </script>
