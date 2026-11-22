@@ -328,10 +328,16 @@
     if (g.over) mostrarFinal();
   }
 
-  // one best-rate answer for every 'can this word still bloom?' question
+  // Shared by the seed card and planting targets, including a graft's head start.
+  function bloomEstimate(w, plant) {
+    const theme = V.themeOf(w, g);
+    const rate = theme === 'flame' ? 3 : theme === 'night' ? 1 : 2;
+    const progress = plant ? plant.progress : g.vigorous[w] ? 2 : 0;
+    const remaining = Math.max(1, V.stageCost(V.traits(w)) * 4 - progress);
+    return { remaining, lit: Math.ceil(remaining / rate), rate };
+  }
   function muyTarde(w) {
-    const best = V.themeOf(w, g) === 'flame' ? 3 : V.themeOf(w, g) === 'night' ? 1 : 2;
-    return Math.ceil(V.stageCost(V.traits(w)) * 4 / best) > V.DAYS - g.day + 1;
+    return bloomEstimate(w).lit > V.DAYS - g.day + 1;
   }
 
   function esObjetivo(p) {
@@ -422,14 +428,14 @@
     const t = V.traits(w), cost = V.stageCost(t);
     const sed = t.thirst === 0 ? 'none' : t.thirst === 1 ? 'normal' : 'high';
     // a planted word has progress already; what matters is what remains
-    const falta = plant ? Math.max(1, cost * 4 - plant.progress) : cost * 4;
+    const estimate = bloomEstimate(w, plant), falta = estimate.remaining;
     $('pista').innerHTML = '«<b>' + w + '</b>» · ' + (THEME_BLURB[V.themeOf(w, g)] || 'a word') +
       ' · thirst ' + sed + ' · resists frost ' + t.hardiness +
       ' · ' + (plant ? 'blooms in ~' + falta + ' more watered night' + (falta > 1 ? 's' : '') : 'blooms in ~' + falta + ' watered nights') +
-      ' (' + Math.ceil(falta / 2) + ' with light)' +
+      (estimate.rate === 1 ? ' (light does not speed it up)' : ' (' + estimate.lit + ' with light every night)') +
       // flame words grow +3 under light, night words never faster than 1:
       // use each word's real best rate before calling anything too late
-      (Math.ceil(falta / (V.themeOf(w, g) === 'flame' ? 3 : V.themeOf(w, g) === 'night' ? 1 : 2)) > V.DAYS - g.day + 1
+      (estimate.lit > V.DAYS - g.day + 1
         ? ' · <b>too late: it would not bloom before the thaw</b>' : '') +
       (g.vigorous[w] ? ' · <b>vigorous</b>' : '') +
       (!plant && g.poem.includes(w) ? ' · <b>already safe in the hoard</b>' : '') +
