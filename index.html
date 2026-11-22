@@ -161,7 +161,7 @@
     </p>
     <div class="como">
       <p><b>1.</b> Click a glowing garden bed to plant the selected word — or pick another in your pouch first.</p>
-      <p><b>2.</b> Water what you want to grow; light makes it faster, and fire words feed on it. When frost is forecast, shelter your words — night words don't mind it.</p>
+      <p><b>2.</b> Water what you want to grow; a lamp speeds a whole row for one night, and fire words feed on it. When frost is forecast, shelter your words — night words don't mind it.</p>
       <p><b>3.</b> After 14 nights, every word that bloomed becomes your poem.</p>
     </div>
     <div class="fila">
@@ -317,7 +317,7 @@
     if (modo === 'regar' && unwatered.length) {
       msg = 'water armed — now click one of the glowing words; it grows tonight.';
     } else if (modo === 'luz' && plants.some(p => !p.lit)) {
-      msg = 'light armed — click a glowing word; lit and watered, it grows twice as fast tonight.';
+      msg = 'light armed — click a word; its lamp covers the whole row for tonight. lit and watered, a word grows twice as fast.';
     } else if (modo === 'abrigar' && plants.some(p => !p.sheltered)) {
       msg = 'shelter armed — click each glowing word you want to protect from tonight\'s frost.';
     } else if (modo === 'injertar' && plants.length) {
