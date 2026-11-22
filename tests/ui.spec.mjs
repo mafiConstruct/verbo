@@ -205,3 +205,24 @@ test('empty-garden advice distinguishes one late seed from an entirely late pouc
   await expect(page.locator('.cama.objetivo')).toHaveCount(9);
   await expect(page.locator('#guia')).toContainText('plant «lantern»');
 });
+
+test('beds and seeds work with keyboard and keep focus across redraws', async ({ page }) => {
+  await begin(page, 'keyboard-garden');
+  const seed = page.locator('.semilla').nth(1);
+  const word = (await seed.textContent()).trim();
+  await seed.focus();
+  await page.keyboard.press('Enter');
+  await expect(seed).toBeFocused();
+  await expect(seed).toHaveAttribute('aria-pressed', 'true');
+  await page.locator('.cama.objetivo').first().hover();
+  await expect(page.locator('.cama.objetivo').first()).toHaveCSS('border-top-color', 'rgb(232, 200, 114)');
+  await expect(page.locator('#pista')).toContainText('«' + word + '»');
+  const bed = page.getByRole('button', { name: 'bed 1, empty', exact: true });
+  await bed.focus();
+  await page.keyboard.press('Space');
+  const planted = page.getByRole('button', { name: new RegExp('^bed 1, ' + word + ',') });
+  await expect(planted).toBeFocused();
+  await expect(page.locator('.cama').first().locator('.palabra')).toHaveText(word);
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('button', { name: 'bed 2, empty', exact: true })).toBeFocused();
+});
