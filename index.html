@@ -317,7 +317,7 @@
     // glow means "this action would change something tonight"
     if (modo === 'regar') return !!p && p.water <= 0;
     if (modo === 'luz') return !!p && !p.lit;
-    if (modo === 'abrigar') return !!p && !p.sheltered && g.forecast > 0;
+    if (modo === 'abrigar') return !!p && !p.sheltered && V.frostDamage(g, p) > 0;
     if (modo === 'injertar') return !!p && p.stage >= 2;
     return false;
   }
@@ -327,13 +327,15 @@
     const plants = g.beds.filter(Boolean);
     const unwatered = plants.filter(p => p.water <= 0);
     const grown = plants.filter(p => p.stage >= 2);
+    // shelter advice names only the words the frost would actually hurt
+    const needsShelter = plants.filter(p => !p.sheltered && V.frostDamage(g, p) > 0);
     let msg;
     if (modo === 'regar' && unwatered.length) {
       msg = 'water armed — now click one of the glowing words; it grows tonight.';
     } else if (modo === 'luz' && plants.some(p => !p.lit)) {
       msg = 'light armed — click a word; its lamp covers the whole row for tonight. lit and watered, a word grows twice as fast.';
-    } else if (modo === 'abrigar' && plants.some(p => !p.sheltered)) {
-      msg = 'shelter armed — click each glowing word you want to protect from tonight\'s frost.';
+    } else if (modo === 'abrigar' && needsShelter.length) {
+      msg = 'shelter armed — click each glowing word; the frost would hurt it tonight.';
     } else if (modo === 'injertar' && plants.length) {
       msg = grown.length >= 2
         ? 'graft armed — click two glowing grown words; they merge into a word that never existed.'
@@ -344,11 +346,13 @@
       msg = 'your move: click a glowing bed to plant «' + (semillaElegida || g.pouch[0]) + '».';
     } else if (!plants.length) {
       msg = 'the pouch is empty — end the night; the wind brings new words.';
-    } else if (g.forecast > 0 && plants.some(p => !p.sheltered)) {
-      const homebody = plants.find(p => !p.sheltered && V.themeOf(p.word, g) === 'night');
+    } else if (g.forecast > 0 && needsShelter.length) {
+      const homebody = plants.find(p => !p.sheltered && V.frostDamage(g, p) === 0 && V.themeOf(p.word, g) === 'night');
       msg = homebody
-        ? 'frost tonight (force ' + g.forecast + '): «' + homebody.word + '» is at home in it — shelter the others.'
-        : 'frost tonight (force ' + g.forecast + '): press shelter, then click each word you want to protect.';
+        ? 'frost tonight (force ' + g.forecast + '): «' + homebody.word + '» is at home in it — shelter the glowing words.'
+        : 'frost tonight (force ' + g.forecast + '): press shelter, then click each glowing word.';
+    } else if (g.forecast > 0 && plants.some(p => !p.sheltered)) {
+      msg = 'frost tonight (force ' + g.forecast + '), but every word out there can take it — no shelter needed.';
     } else if (unwatered.length) {
       msg = 'press water, then click «' + unwatered[0].word + '» — a word only grows on watered nights (light makes it faster).';
     } else if (grown.length >= 2 && g.actions >= 2) {
@@ -440,7 +444,7 @@
       }
       for (let i = 0; i < V.BEDS && g.actions > 0; i++) {
         const p = g.beds[i];
-        if (p && !p.sheltered && g.forecast - p.traits.hardiness >= 1 && p.health <= 2) V.shelter(g, i);
+        if (p && !p.sheltered && V.frostDamage(g, p) > 0 && p.health <= 2) V.shelter(g, i);
       }
       for (let i = 0; i < V.BEDS && g.actions > 0; i++) {
         if (!g.beds[i] && g.pouch.length && g.beds.filter(Boolean).length < 6) V.plantAt(g, i, g.pouch[0]);
