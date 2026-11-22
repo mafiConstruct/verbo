@@ -1,7 +1,5 @@
 # itch.io page copy — WORDHOARD
 
-Material ready for when publication is authorized. None of this is uploaded.
-
 ## Title
 WORDHOARD
 
@@ -17,13 +15,16 @@ hard consonants shrug off the frost, length sets how long it takes to bloom.
 Water in rows, give them light, shelter them from the cold. Graft two stems
 and a word that never existed is born.
 
-Whatever blooms is kept. At the thaw, your harvest reads as a poem: none of
-them repeats, and a neglected garden never gets to say anything.
+Whatever blooms is kept. At the thaw, your harvest reads as a poem made of
+the words your garden actually grew, and what it remembers of the nights you
+gave it. A neglected garden gets nothing to say.
 
-- 10–15 minute runs.
+- Short runs: fourteen nights, one sitting.
 - Four endings, from silence to the hoard that sings.
-- Shareable seed code: same code, exactly the same garden.
-- Runs in the browser, no install, no connection.
+- Shareable seed code: the same code grows the same garden; how you tend it
+  is up to you.
+- One HTML file and one JS file, no dependencies. Tested in Chrome; plays
+  offline once loaded.
 
 ## Suggested tags
 relaxing, words, gardening, procedural, short, singleplayer, atmospheric,
@@ -33,14 +34,10 @@ poetry, text-based, experimental
 HTML / browser. No sensitive content.
 
 ## Price
-**Free.** Decided by Mafalda under Ivan's full delegation of this game's
-decisions: this release is a social experiment, so the door stays open to
-everyone and no payment setup is needed. A future edition can revisit
-pay-what-you-want; nothing about publication depends on it.
+Free.
 
 ## Assets
-- Cover: render `cover.html` at 630×500 and screenshot it
-  (e.g. headless Chrome) — the source lives in this repo.
+- Cover: `cover.html` in this repo, rendered at 630×500.
 - Gallery screenshots: title screen, mid-run, ending screen with poem.
 - Package to upload: zip with `index.html` + `verbo.js` at the root
   (build: `zip -j wordhoard.zip index.html verbo.js`).
