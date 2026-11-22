@@ -48,7 +48,7 @@
   .cama .planta { color: var(--txt); font-size: 15px; line-height: 1.15; text-align: center; white-space: pre; margin-bottom: 2px; }
   .cama .palabra { font-size: 13px; margin-bottom: 3px; }
   .cama .estado { font-size: 11px; color: var(--dim); min-height: 14px; }
-  .cama .vacia { color: #2f4a30; font-size: 22px; padding-bottom: 30px; }
+  .cama .vacia { color: #22361f; font-size: 13px; padding-bottom: 30px; text-align: center; }
   .fam-luz { color: var(--luz); } .fam-agua { color: var(--agua); }
   .fam-tierra { color: var(--tierra); } .fam-piedra { color: var(--piedra); }
 
@@ -229,7 +229,10 @@
       } else {
         const v = document.createElement('div');
         v.className = 'vacia';
-        v.textContent = '·';
+        v.textContent = '· · ·\n· · ·\n· · ·';
+        v.style.whiteSpace = 'pre';
+        v.style.lineHeight = '1.4';
+        v.style.paddingBottom = '18px';
         d.append(v);
       }
       d.onclick = () => clicCama(i);
