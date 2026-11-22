@@ -1,0 +1,13 @@
+{
+  "name": "wordhoard",
+  "private": true,
+  "version": "1.0.0",
+  "description": "A greenhouse of words. Zero-runtime-dependency browser game; dev-only UI tests.",
+  "scripts": {
+    "test": "node test.js",
+    "test:ui": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0"
+  }
+}
