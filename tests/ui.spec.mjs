@@ -416,9 +416,11 @@ test('a bloom keeps its flower on the bed that night and the hoard shows flowers
   await expect(bed).toHaveAttribute('aria-label', /bloomed here and is safe in the hoard/);
   await expect(bed.locator('svg.planta.eco')).toBeVisible();
   await expect(bed.locator('.palabra')).toHaveText('lantern');
-  // and the hoard is a visible collection, not only words
-  await expect(page.locator('#tesoro .flor svg')).toHaveCount(1);
+  // and the hoard is a visible collection of flowers, not only words
+  await expect(page.locator('#tesoro .tesoro-flor svg')).toHaveCount(1);
+  await expect(page.locator('#tesoro .tesoro-flor').first()).toHaveClass(/fam-water/); // lantern: l → water family
   await expect(page.locator('#tesoro')).toContainText('«lantern»');
+  await expect(page.locator('#tesoro')).toHaveAttribute('aria-label', /the hoard: «lantern»/);
   // replanting the same word in that bed retires the echo
   await page.locator('#semillas .semilla', { hasText: 'lantern' }).click();
   await bed.click();
