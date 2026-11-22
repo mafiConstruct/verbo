@@ -265,3 +265,56 @@ test('intro fits narrow phones and can scroll on a short landscape screen', asyn
   await page.click('#comenzar');
   await expect(page.locator('#pantalla-inicio')).toBeHidden();
 });
+
+test('repeating a lamp, full watering or shelter does not burn an action', async ({ page }) => {
+  for (const mode of ['luz', 'regar', 'abrigar']) {
+    await page.goto('/index.html');
+    await page.evaluate(() => {
+      const original = VERBO.newGame;
+      VERBO.newGame = code => {
+        const state = original(code || 'careful-tending');
+        state.pouch = ['lantern']; state.forecast = 3;
+        return state;
+      };
+    });
+    await page.click('#comenzar');
+    await page.locator('.cama').first().click();
+    await page.click('button[data-modo="' + mode + '"]');
+    await page.locator('.cama').first().click();
+    await expect(page.locator('#acciones-restantes')).toHaveText('●○○');
+    await page.locator('.cama').first().click();
+    await expect(page.locator('#acciones-restantes')).toHaveText('●○○');
+    await expect(page.locator('#guia')).toContainText('no action spent');
+  }
+});
+
+test('watering a full bed still spends an action when its neighbor needs the sip', async ({ page }) => {
+  await page.goto('/index.html');
+  await page.evaluate(() => {
+    const original = VERBO.newGame;
+    VERBO.newGame = code => {
+      const state = original(code || 'neighbor-sip');
+      state.pouch = ['lantern', 'marrow']; state.forecast = 0;
+      VERBO.plantAt(state, 0, 'lantern'); VERBO.plantAt(state, 1, 'marrow');
+      state.beds[0].water = 2; state.actions = 3;
+      return state;
+    };
+  });
+  await page.click('#comenzar');
+  await page.click('button[data-modo="regar"]');
+  await page.locator('.cama').first().click();
+  await expect(page.locator('.cama').nth(1).locator('.estado')).toContainText('≈1');
+  await expect(page.locator('#acciones-restantes')).toHaveText('●●○');
+  await page.locator('.cama').first().click();
+  await expect(page.locator('#acciones-restantes')).toHaveText('●●○');
+});
+
+test('a night word gets honest water advice and cannot waste a lamp action', async ({ page }) => {
+  await beginWithSeed(page, 'marrow');
+  await page.locator('.cama').first().click();
+  await expect(page.locator('#guia')).toContainText('this night word does not need a lamp');
+  await page.click('button[data-modo="luz"]');
+  await page.locator('.cama').first().click();
+  await expect(page.locator('#acciones-restantes')).toHaveText('●●○');
+  await expect(page.locator('#guia')).toContainText('no action spent');
+});
