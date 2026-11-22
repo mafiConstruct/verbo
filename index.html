@@ -178,6 +178,7 @@
 <div class="overlay escondido" id="pantalla-final">
   <div class="tarjeta">
     <h2 id="final-titulo"></h2>
+    <div class="sub" id="final-sub"></div>
     <div class="poema" id="final-poema"></div>
     <div class="stats" id="final-stats"></div>
     <div class="fila">
@@ -384,6 +385,8 @@
   function mostrarFinal() {
     const e = g.ending;
     $('final-titulo').textContent = e.title;
+    const fs = $('final-sub');
+    if (e.subtitle) { fs.textContent = e.subtitle; fs.style.display = ''; } else { fs.style.display = 'none'; }
     $('final-poema').innerHTML = e.lines.map(l => '<div>' + l + '</div>').join('');
     $('final-stats').innerHTML =
       'you survived ' + e.days + ' nights · ' + e.bloomed + ' words bloomed · ' +
