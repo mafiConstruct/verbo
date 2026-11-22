@@ -335,7 +335,10 @@
     // light only feeds non-night words; lighting a night word is a wasted action
     const lightable = plants.filter(p => !p.lit && V.themeOf(p.word, g) !== 'night');
     let msg;
-    if (modo === 'regar' && unwatered.length) {
+    if (g.actions <= 0) {
+      // every other branch would push an action the player cannot take
+      msg = 'out of actions — end the night →';
+    } else if (modo === 'regar' && unwatered.length) {
       msg = 'water armed — now click one of the glowing words; it grows tonight.';
     } else if (modo === 'luz' && lightable.length) {
       msg = 'light armed — click a glowing word; its lamp covers the whole row for tonight. lit and watered, a word grows twice as fast.';
