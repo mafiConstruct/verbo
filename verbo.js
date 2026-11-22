@@ -36,6 +36,26 @@
   ];
   const RARE = ['word', 'seed', 'shelter', 'name', 'verb'];
 
+  // ---------- Themes: what a word is ABOUT (not how it sounds) ----------
+  // Hand-authored over the lexicon; grafted words inherit their first parent's theme.
+  const THEME_MAP = {
+    ember: 'flame', ash: 'flame', tinder: 'flame', coal: 'flame', cinder: 'flame',
+    wick: 'flame', lantern: 'flame', kettle: 'flame', anvil: 'flame',
+    river: 'tide', rain: 'tide', mist: 'tide', dew: 'tide', inlet: 'tide',
+    silt: 'tide', reed: 'tide', salt: 'tide',
+    acorn: 'leaf', elm: 'leaf', bark: 'leaf', bole: 'leaf', grove: 'leaf',
+    orchard: 'leaf', sap: 'leaf', ivy: 'leaf', thorn: 'leaf', bramble: 'leaf',
+    nettle: 'leaf', yarrow: 'leaf', pollen: 'leaf', grain: 'leaf',
+    loam: 'loam', peat: 'loam', turf: 'loam', moss: 'loam', furrow: 'loam', husk: 'loam',
+    snow: 'night', frost: 'night', north: 'night', echo: 'night', hollow: 'night',
+    dawn: 'night', marrow: 'night',
+    owl: 'wing', crow: 'wing', wren: 'wing', nest: 'wing', burrow: 'wing',
+    flint: 'stone', quartz: 'stone',
+  };
+  function themeOf(w, state) {
+    return (state && state.bornThemes && state.bornThemes[w]) || THEME_MAP[w] || 'loam';
+  }
+
   // ---------- Traits derived from the word itself ----------
   const VOWELS = 'aeiou';
   function traits(word) {
@@ -84,7 +104,7 @@
     const state = {
       code, rng, day: 1, actions: ACTIONS_PER_DAY,
       beds: new Array(BEDS).fill(null),
-      pouch, poem: [], grafts: 0, bloomed: 0, vigorous: {}, lost: [],
+      pouch, poem: [], grafts: 0, bloomed: 0, vigorous: {}, lost: [], bornThemes: {},
       log: [], over: false, ending: null,
       windStock: lex.concat(RARE.filter(w => !pouch.includes(w))),
     };
@@ -125,6 +145,7 @@
     state.beds[bedA] = null; state.beds[bedB] = null;
     state.pouch.push(w);
     state.vigorous[w] = true;
+    state.bornThemes[w] = themeOf(A.word, state); // a born word keeps its first parent's theme
     state.grafts++;
     state.actions -= 2;
     say(state, 'you grafted «' + A.word + '» with «' + B.word + '»: «' + w + '» was born, a new and vigorous word.');
@@ -226,23 +247,33 @@
     const kept = [];
     for (const w of state.poem) if (!kept.includes(w)) kept.push(w);
     const words = kept.slice(0, 9);
-    // verses shaped by the words themselves: a rare word stands alone;
-    // a verse holds at most 3 words and 16 letters; short words lead to long;
-    // a word born in this garden closes its verse.
-    const lines = [];
-    let verse = [], letters = 0;
-    const flush = () => {
-      if (!verse.length) return;
-      verse.sort((a, b) => a.length - b.length || ((state.vigorous[a] ? 1 : 0) - (state.vigorous[b] ? 1 : 0)));
-      lines.push(verse.join(', '));
-      verse = []; letters = 0;
-    };
+    // verses group words that are ABOUT the same thing: one theme per verse,
+    // biggest theme first; a verse holds at most 3 words and 16 letters,
+    // short words lead to long; a born word closes its verse.
+    // rare words stand alone, after the themed verses.
+    const themed = [];
+    const rares = [];
+    const byTheme = {};
     for (const w of words) {
-      if (RARE.includes(w)) { flush(); lines.push(w); continue; }
-      if (verse.length === 3 || letters + w.length > 16) flush();
-      verse.push(w); letters += w.length;
+      if (RARE.includes(w)) { rares.push(w); continue; }
+      const t = themeOf(w, state);
+      (byTheme[t] = byTheme[t] || []).push(w);
     }
-    flush();
+    for (const t of Object.keys(byTheme).sort((a, b) => byTheme[b].length - byTheme[a].length)) {
+      const group = byTheme[t].sort((a, b) => a.length - b.length);
+      let verse = [], letters = 0;
+      for (const w of group) {
+        if (verse.length === 3 || letters + w.length > 16) { themed.push(verse.join(', ')); verse = []; letters = 0; }
+        verse.push(w); letters += w.length;
+      }
+      if (verse.length) themed.push(verse.join(', '));
+    }
+    const bornLast = line => {
+      const ws = line.split(', ');
+      if (!ws.some(w => state.vigorous[w])) return line;
+      return ws.filter(w => !state.vigorous[w]).concat(ws.filter(w => state.vigorous[w])).join(', ');
+    };
+    const lines = themed.map(bornLast).concat(rares);
     lines.push(CLOSERS[dominantFamily(state.poem)]);
     if (words.some(w => state.vigorous[w])) lines.push('one of these words was never heard before.');
     if (lostNames.length) lines.push(winterKeeps(lostNames));
@@ -257,8 +288,13 @@
     else if (state.poem.length >= 6) title = 'Just enough';
     else if (state.poem.length >= 1) title = 'Almost nothing';
     else title = 'Silence';
+    const lostUniq = [...new Set(state.lost)].length;
+    let subtitle = null;
+    if (state.poem.length >= 1 && lostUniq >= 3) subtitle = 'the frost took its share';
+    else if (!state.poem.length && lostUniq > 0) subtitle = 'only the names of the dead';
     state.ending = {
       title,
+      subtitle,
       lines: composePoem(state),
       days: Math.min(state.day - 1, DAYS),
       bloomed: state.bloomed,
@@ -272,8 +308,8 @@
 
   return {
     newGame, endDay, plantAt, water, light, shelter, graft, finish, stageCost,
-    traits, blend, familyOf, composePoem, aliveCount, rollFrost,
-    LEXICON, RARE, STAGES, BEDS, DAYS, ACTIONS_PER_DAY,
+    traits, blend, familyOf, themeOf, composePoem, aliveCount, rollFrost,
+    LEXICON, RARE, THEME_MAP, STAGES, BEDS, DAYS, ACTIONS_PER_DAY,
     mulberry32, hashStr,
   };
 });
