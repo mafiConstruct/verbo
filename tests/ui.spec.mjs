@@ -123,3 +123,39 @@ test('mobile layout: no horizontal overflow at 375px', async ({ page }) => {
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 2);
   expect(overflow).toBe(false);
 });
+
+// Controlled local fixtures check the card against the engine's actual growth rules.
+async function beginWithSeed(page, word, vigorous = false, day = 1) {
+  await page.goto('/index.html');
+  await page.evaluate(({ word, vigorous, day }) => {
+    const original = VERBO.newGame;
+    VERBO.newGame = code => {
+      const state = original(code);
+      state.pouch = [word]; state.day = day; state.forecast = 0;
+      if (vigorous) state.vigorous[word] = true;
+      return state;
+    };
+  }, { word, vigorous, day });
+  await page.click('#comenzar');
+}
+
+test('fire seed card uses triple lit growth, not double', async ({ page }) => {
+  await beginWithSeed(page, 'lantern');
+  await expect(page.locator('#pista')).toContainText('8 watered nights (3 with light every night)');
+});
+
+test('night seed card does not promise faster growth under light', async ({ page }) => {
+  await beginWithSeed(page, 'marrow');
+  await expect(page.locator('#pista')).toContainText('8 watered nights (light does not speed it up)');
+});
+
+test('vigorous seed head start agrees across card and late-night planting glow', async ({ page }) => {
+  await beginWithSeed(page, 'lantern', true, 13);
+  await expect(page.locator('#pista')).toContainText('6 watered nights (2 with light every night)');
+  await expect(page.locator('#pista')).not.toContainText('too late');
+  await expect(page.locator('.cama.objetivo')).toHaveCount(9);
+  await page.locator('.cama').first().click();
+  // Inspect the planted child, whose progress already includes that same head start.
+  await page.locator('.cama').first().click();
+  await expect(page.locator('#pista')).toContainText('6 more watered nights (2 with light every night)');
+});
