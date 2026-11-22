@@ -425,3 +425,20 @@ test('a bloom keeps its flower on the bed that night and the hoard shows flowers
   await expect(bed).toHaveAttribute('aria-label', /lantern, seed/);
   await expect(bed.locator('svg.planta.eco')).toHaveCount(0);
 });
+
+test('frost is visible: cold garden, ice on the threatened plant, frost on the shelter glass', async ({ page }) => {
+  await begin(page, 'seed-2xk5l0'); // night 1 forecast: frost, force 1
+  const bed = page.locator('#camas > .cama').first();
+  await bed.click(); // plant lantern (flame): frostDamage = 1, threatened
+  await expect(page.locator('#camas')).toHaveClass(/helada/);
+  await expect(bed.locator('svg.planta path.escarcha-planta')).toHaveCount(2);
+  await expect(bed).toHaveAttribute('aria-label', /frost threatens it tonight/);
+  await page.click('button[data-modo="abrigar"]');
+  await bed.click();
+  await expect(bed).toHaveAttribute('aria-label', /frost held off by the shelter/);
+  await expect(bed.locator('svg.planta path.escarcha-planta')).toHaveCount(0);
+  await expect(bed.locator('svg.planta path.escarcha-refugio')).toHaveCount(2);
+  // after the night passes the frost cue is gone on a calm night
+  await page.click('#noche');
+  await expect(page.locator('#camas')).not.toHaveClass(/helada/);
+});
