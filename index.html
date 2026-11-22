@@ -61,7 +61,18 @@
     80% { transform: translateY(58px) scale(1); opacity: .95; }
     100% { transform: translateY(64px) scaleY(.4); opacity: 0; }
   }
-  @media (prefers-reduced-motion: reduce) { .cama .gota-cayendo { display: none; } }
+  .cama .flash-lampara {
+    position: absolute; left: 50%; top: 2px; width: 62px; height: 62px; margin-left: -31px;
+    background: radial-gradient(circle, #e8e2a0cc 0%, #e8e2a055 45%, transparent 70%);
+    border-radius: 50%; pointer-events: none; animation: caer-lampara .8s ease-out forwards; z-index: 2;
+  }
+  @keyframes caer-lampara {
+    0% { transform: translateY(-6px) scale(.3); opacity: 0; }
+    25% { opacity: .9; }
+    70% { transform: translateY(24px) scale(1.15); opacity: .55; }
+    100% { transform: translateY(32px) scale(1.3); opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) { .cama .gota-cayendo, .cama .flash-lampara { display: none; } }
   #camas.paso-noche { animation: pasar-noche .85s ease-in-out; }
   #camas.paso-noche-fria { animation-name: pasar-noche-fria; }
   @keyframes pasar-noche {
@@ -702,6 +713,7 @@
   }
 
   let gotaReciente = null;
+  let lamparaReciente = null;
   function clicCama(i) {
     if (g.over) return;
     const p = g.beds[i];
@@ -725,7 +737,7 @@
       if (p && g.actions > 0) {
         const row = Math.floor(i / 3) * 3;
         const helps = g.beds.slice(row, row + 3).some(q => q && !q.lit && V.themeOf(q.word, g) !== 'night');
-        if (helps) V.light(g, i);
+        if (helps) { V.light(g, i); lamparaReciente = i; }
         else notice = 'no word in this row needs more light tonight — no action spent.';
       }
     } else if (modo === 'abrigar') {
@@ -748,6 +760,7 @@
     }
     render();
     if (gotaReciente !== null) { soltarGota(gotaReciente); gotaReciente = null; }
+    if (lamparaReciente !== null) { soltarLampara(lamparaReciente); lamparaReciente = null; }
     if (notice) $('guia').textContent = notice;
   }
 
@@ -760,6 +773,21 @@
     gota.setAttribute('aria-hidden', 'true');
     bed.append(gota);
     gota.addEventListener('animationend', () => gota.remove());
+  }
+
+  // light you can see: a warm flash blooms down every bed in the lit row
+  function soltarLampara(i) {
+    const row = Math.floor(i / 3) * 3;
+    for (let n = row; n < row + 3 && n < V.BEDS; n++) {
+      const bed = camasEl.children[n];
+      if (!bed) continue;
+      const flash = document.createElement('div');
+      flash.className = 'flash-lampara';
+      flash.style.animationDelay = ((n - row) * 90) + 'ms';
+      flash.setAttribute('aria-hidden', 'true');
+      bed.append(flash);
+      flash.addEventListener('animationend', () => flash.remove());
+    }
   }
 
   document.querySelectorAll('#acciones button[data-modo]').forEach(b => {
