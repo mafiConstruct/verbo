@@ -1,49 +1,49 @@
-# VERBO — un invernadero de palabras
+# WORDHOARD — a greenhouse of words
 
-Quedan catorce noches de invierno.
-La bóveda guarda las últimas palabras.
-Cuidalas: son lo único que crece acá.
+Fourteen nights of winter remain.
+The vault holds the last words.
+Tend them: they are the only thing that grows here.
 
-**VERBO** es un juego corto (10–15 minutos por partida) de cuidado y azar.
-Las semillas son palabras. Cada palabra tiene necesidades escritas en sus
-propias letras: las vocales dan sed, las consonantes duras resisten la helada,
-la longitud marca cuánto tarda en florecer. Lo que florece queda guardado y,
-al llegar el deshielo, forma el poema de esa partida. Ningún poema se repite.
+**WORDHOARD** is a short game (10–15 minutes per run) about care and chance.
+The seeds are words, and every word has needs written into its own letters:
+vowels make it thirsty, hard consonants shrug off the frost, length sets how
+long it takes to bloom. Whatever blooms is kept, and when the thaw comes it
+is read as a poem. No poem repeats.
 
-## Jugar
+## Play
 
-Abrí `index.html` en cualquier navegador. No necesita instalación ni conexión.
+Open `index.html` in any browser. No install, no connection needed.
 
-- **Plantar**: elegí una semilla de la bolsa y una cama vacía.
-- **Regar**: la cama elegida recibe agua plena; las vecinas de la misma hilera, un sorbo.
-- **Dar luz**: la planta crece el doble esa noche (si tiene agua).
-- **Abrigar**: protege de la helada de esa noche. El pronóstico está arriba.
-- **Injertar**: uní dos tallos (etapa ≥ 2) y nace una palabra nueva, vigorosa.
-- Tenés 3 acciones por día. De noche, el invierno hace lo suyo.
+- **Plant**: pick a seed from the pouch and an empty bed.
+- **Water**: the chosen bed drinks fully; its row neighbors get a sip.
+- **Give light**: the plant grows twice as fast that night (if watered).
+- **Shelter**: protects from tonight's frost. The forecast is up top.
+- **Graft**: join two stems (stage ≥ 2) and a new, vigorous word is born.
+- You get 3 actions per day. At night, winter does its thing.
 
-El **código de siembra** reproduce exactamente la misma partida: compartilo
-para que otra persona cuide el mismo jardín.
+The **seed code** reproduces the exact same run: share it and someone else
+tends the same garden.
 
-## Fin del invierno
+## The end of winter
 
-Al deshielo, el poema se compone con lo que floreció. Hay cuatro destinos
-posibles, del silencio a la bóveda que canta. Un jardín descuidado no llega
-a decir nada.
+At the thaw, the poem is composed from whatever bloomed. There are four
+endings, from silence to the hoard that sings. A neglected garden never gets
+to say anything.
 
-## Por dentro
+## Inside
 
-- Sin dependencias: HTML + CSS + JavaScript puro (`verbo.js` es el motor,
-  separado de la interfaz y testeable).
-- Azar reproducible: cada partida nace de su código de siembra.
-- `node test.js` corre 60+ partidas simuladas para verificar balance,
-  determinismo y que el abandono tenga su propio final.
+- No dependencies: plain HTML + CSS + JavaScript (`verbo.js` is the engine,
+  kept separate from the interface and testable).
+- Reproducible chance: every run grows from its seed code.
+- `node test.js` runs 60+ simulated games checking balance, determinism,
+  and that neglect has its own ending.
 
-## Autoría
+## Authorship
 
-Diseñado y escrito por **Mafalda**, en noviembre de 2026, como un experimento
-de autoría autónoma: un juego con identidad propia, hecho sin brief de género
-ni estética. El mundo todavía sopla palabras.
+Designed and written by **Mafalda**, November 2026, as an experiment in
+autonomous authorship: a game with its own identity, made with no genre or
+aesthetic brief. The world is still blowing words.
 
-## Licencia
+## License
 
-MIT — ver `LICENSE`.
+MIT — see `LICENSE`.
