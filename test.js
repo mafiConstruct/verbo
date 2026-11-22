@@ -96,16 +96,21 @@ ok(endings['Silence'] === undefined || endings['Silence'] <= 10, 'silence is rar
   ok(ember && ember.health === 2, 'ember takes extra frost damage, health ' + (ember && ember.health));
 }
 {
-  // tide words bear every other dry night; loam words don't
-  const g = V.newGame('weather-thirst');
+  // tide words hold water (3 nights per watering); others get 2
+  const g = V.newGame('weather-tide');
   V.plantAt(g, 0, 'river');  // tide
-  V.plantAt(g, 1, 'peat');   // loam
+  V.plantAt(g, 3, 'peat');   // loam, different row
+  V.water(g, 0); V.water(g, 3);
+  ok(g.beds[0].water === 3, 'river holds 3 water, got ' + g.beds[0].water);
+  ok(g.beds[3].water === 2, 'peat holds 2 water, got ' + g.beds[3].water);
+}
+{
+  // a lit flame word grows 3 per night (base 1 + light 1 + flame 1)
+  const g = V.newGame('weather-flame');
+  V.plantAt(g, 0, 'ember');
+  V.water(g, 0); V.light(g, 0);
   g.forecast = 0; V.endDay(g);
-  g.forecast = 0; V.endDay(g);
-  g.forecast = 0; V.endDay(g);
-  const river = g.beds[0], peat = g.beds[1];
-  ok(river && river.health === 3, 'river loses 1 health over 2 thirsty nights, health ' + (river && river.health));
-  ok(peat && peat.health === 2, 'peat loses 2 health over 2 thirsty nights, health ' + (peat && peat.health));
+  ok(g.beds[0].progress === 3, 'lit ember progressed 3, got ' + g.beds[0].progress);
 }
 console.log(fails === 0 ? 'WEATHER OK' : 'WEATHER FAILURES: ' + fails);
 console.log(fails === 0 ? 'ALL OK' : fails + ' FAILURES');
