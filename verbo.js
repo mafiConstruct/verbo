@@ -84,7 +84,7 @@
     const state = {
       code, rng, day: 1, actions: ACTIONS_PER_DAY,
       beds: new Array(BEDS).fill(null),
-      pouch, poem: [], grafts: 0, bloomed: 0, vigorous: {},
+      pouch, poem: [], grafts: 0, bloomed: 0, vigorous: {}, lost: [],
       log: [], over: false, ending: null,
       windStock: lex.concat(RARE.filter(w => !pouch.includes(w))),
     };
@@ -160,6 +160,7 @@
       // death
       if (p.health <= 0) {
         say(state, '«' + p.word + '» went dark.');
+        state.lost.push(p.word);
         state.beds[i] = null;
         continue;
       }
@@ -208,21 +209,43 @@
     none: 'the thaw came. there was nothing to say.',
   };
 
+  function winterKeeps(kept) {
+    if (kept.length === 1) return 'winter keeps «' + kept[0] + '».';
+    if (kept.length === 2) return 'winter keeps «' + kept[0] + '» and «' + kept[1] + '».';
+    return 'winter keeps «' + kept[0] + '», and ' + (kept.length - 1) + ' names more.';
+  }
+
   function composePoem(state) {
-    if (!state.poem.length) return ['the thaw came.', 'there was nothing to say.'];
+    const lostNames = [...new Set(state.lost)];
+    if (!state.poem.length) {
+      const bleak = ['the thaw came.', 'there was nothing to say.'];
+      if (lostNames.length) bleak.push(winterKeeps(lostNames));
+      return bleak;
+    }
     // one line per word at most: a repeated bloom feeds the count, not the verse
     const kept = [];
     for (const w of state.poem) if (!kept.includes(w)) kept.push(w);
     const words = kept.slice(0, 9);
-    // uneven verses read like a voice, not a list: 3, 2, 3, then a single word
-    const pattern = [3, 2, 3, 1];
+    // verses shaped by the words themselves: a rare word stands alone;
+    // a verse holds at most 3 words and 16 letters; short words lead to long;
+    // a word born in this garden closes its verse.
     const lines = [];
-    for (let i = 0, p = 0; i < words.length; p++) {
-      const n = Math.min(pattern[p % pattern.length], words.length - i);
-      lines.push(words.slice(i, i + n).join(', '));
-      i += n;
+    let verse = [], letters = 0;
+    const flush = () => {
+      if (!verse.length) return;
+      verse.sort((a, b) => a.length - b.length || ((state.vigorous[a] ? 1 : 0) - (state.vigorous[b] ? 1 : 0)));
+      lines.push(verse.join(', '));
+      verse = []; letters = 0;
+    };
+    for (const w of words) {
+      if (RARE.includes(w)) { flush(); lines.push(w); continue; }
+      if (verse.length === 3 || letters + w.length > 16) flush();
+      verse.push(w); letters += w.length;
     }
+    flush();
     lines.push(CLOSERS[dominantFamily(state.poem)]);
+    if (words.some(w => state.vigorous[w])) lines.push('one of these words was never heard before.');
+    if (lostNames.length) lines.push(winterKeeps(lostNames));
     return lines;
   }
 
@@ -240,6 +263,7 @@
       days: Math.min(state.day - 1, DAYS),
       bloomed: state.bloomed,
       grafts: state.grafts,
+      lost: state.lost.length,
       diversity: fams,
       code: state.code,
     };
