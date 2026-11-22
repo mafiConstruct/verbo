@@ -532,6 +532,32 @@ test('a word the frost takes keeps its withered stem on the bed that night', asy
   await expect(bed.locator('svg.planta.marchita')).toHaveCount(0);
 });
 
+test('the thaw poem rises verse by verse', async ({ page }) => {
+  await beginWithSeed(page, 'lantern', false, 12); // day 12: bloom at 14, ending right after
+  const bed = page.locator('#camas > .cama').first();
+  await bed.click(); // plant lantern
+  for (let n = 0; n < 3; n++) {
+    await page.click('[data-modo="regar"]');
+    await bed.click();
+    await page.click('[data-modo="luz"]');
+    await bed.click();
+    await page.click('#noche');
+  }
+  const versos = page.locator('#final-poema .verso');
+  await expect(page.locator('#pantalla-final')).toBeVisible();
+  const count = await versos.count();
+  expect(count).toBeGreaterThan(1); // a real poem, more than one verse
+  const delays = await versos.evaluateAll(els => els.map(el => parseFloat(el.style.animationDelay)));
+  expect(delays[1]).toBeGreaterThan(delays[0]); // later verses wait their turn
+  await expect(async () => { // and every verse ends fully shown
+    const opacities = await versos.evaluateAll(els => els.map(el => getComputedStyle(el).opacity));
+    expect(opacities.every(o => o === '1')).toBe(true);
+  }).toPass({ timeout: count * 700 + 3000 });
+  // one bloom reads as one word, not "1 words bloomed"
+  await expect(page.locator('#final-stats')).toContainText('1 word bloomed');
+  await expect(page.locator('#final-stats')).not.toContainText('1 words');
+});
+
 test('a bloomed word stands in flower in the thaw garden', async ({ page }) => {
   await beginWithSeed(page, 'lantern', false, 12);
   const bed = page.locator('#camas > .cama').first();
