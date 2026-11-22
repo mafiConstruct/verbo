@@ -159,3 +159,29 @@ test('vigorous seed head start agrees across card and late-night planting glow',
   await page.locator('.cama').first().click();
   await expect(page.locator('#pista')).toContainText('6 more watered nights (2 with light every night)');
 });
+
+test('selected seed card updates its late warning when the night changes', async ({ page }) => {
+  await beginWithSeed(page, 'marrow', false, 7);
+  await expect(page.locator('#pista')).not.toContainText('too late');
+  await page.click('#noche');
+  await expect(page.locator('#dia')).toHaveText('8');
+  await expect(page.locator('#pista')).toContainText('too late');
+  await expect(page.locator('.semilla.elegida')).toHaveClass(/tarde/);
+});
+
+test('inspected planted word refreshes its remaining growth after dawn', async ({ page }) => {
+  await beginWithSeed(page, 'ash');
+  await page.locator('.cama').first().click();
+  await page.click('button[data-modo="regar"]');
+  await page.locator('.cama').first().click();
+  await page.click('button[data-modo="luz"]');
+  await page.locator('.cama').first().click();
+  // No actions left; plant mode cannot be armed by its disabled button.
+  await page.click('#noche');
+  await page.click('button[data-modo="plantar"]');
+  await page.locator('.cama').first().click();
+  await expect(page.locator('#pista')).toContainText('1 more watered night');
+  await page.click('#noche');
+  await expect(page.locator('#pista')).not.toContainText('1 more watered night');
+  await expect(page.locator('#pista')).toContainText('already safe in the hoard');
+});
