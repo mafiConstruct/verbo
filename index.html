@@ -51,6 +51,12 @@
   .cama.watered { background: radial-gradient(ellipse at 50% 95%, #285d7066, transparent 70%), var(--panel); }
   .cama.sunlit { background: radial-gradient(ellipse at 80% 5%, #a68c3444, transparent 80%), var(--panel); }
   .cama.ailing .planta { color: var(--hurt); }
+  /* frost is the antagonist: on frost nights the cold is on the garden itself */
+  #camas.helada .cama::before {
+    content: ''; position: absolute; inset: 0; border-radius: 4px;
+    background: linear-gradient(#285d7038, transparent 55%); pointer-events: none;
+  }
+  #camas.helada-fuerte .cama::before { background: linear-gradient(#285d7059, transparent 65%); }
   @media (max-width: 760px) { .cama .planta { height: 68px; } }
   .cama .palabra { font-size: 13px; margin-bottom: 3px; }
   .cama .estado { font-size: 11px; color: var(--dim); min-height: 14px; }
@@ -225,7 +231,7 @@
   const camasEl = $('camas'), semillasEl = $('semillas'), registroEl = $('registro');
 
   // A word grows a body: the silhouette is progress, care is visible around it.
-  function plantPicture(p) {
+  function plantPicture(p, frostThreat) {
     const ns = 'http://www.w3.org/2000/svg';
     const svg = document.createElementNS(ns, 'svg');
     svg.setAttribute('viewBox', '0 0 120 92');
@@ -253,6 +259,15 @@
       add('path', { d: 'M99 3 V6 M99 26 V29 M86 16 H89 M109 16 H112', stroke: '#e8c872', 'stroke-width': 1.5 });
     }
     if (p.sheltered) add('path', { d: 'M19 70 V19 Q60 -3 101 19 V70 M19 20 H101', fill: 'none', stroke: '#b3d7cd', 'stroke-width': 1.5, opacity: .7 });
+    // frost you can see: ice on the threatened plant, or on the glass that holds it off
+    if (frostThreat) {
+      const ice = p.sheltered
+        ? [[30, 12], [88, 10]] // on the shelter glass
+        : [[30, 30], [88, 54]]; // on the plant itself
+      ice.forEach(([x, y]) => {
+        add('path', { d: 'M' + x + ' ' + (y - 5) + ' V' + (y + 5) + ' M' + (x - 5) + ' ' + y + ' H' + (x + 5), stroke: '#9fd4e0', 'stroke-width': 1.5, 'stroke-linecap': 'round', class: p.sheltered ? 'escarcha-refugio' : 'escarcha-planta' });
+      });
+    }
     return svg;
   }
 
@@ -300,16 +315,19 @@
     const pr = $('pronostico');
     if (g.forecast > 0) { pr.textContent = 'frost, force ' + g.forecast; pr.className = 'pronostico-frio'; }
     else { pr.textContent = 'calm night'; pr.className = 'pronostico-calma'; }
+    camasEl.classList.toggle('helada', g.forecast > 0);
+    camasEl.classList.toggle('helada-fuerte', g.forecast >= 2);
 
     // beds
     camasEl.innerHTML = '';
     g.beds.forEach((p, i) => {
       const d = document.createElement('button');
       d.type = 'button'; d.dataset.focusKey = 'bed:' + i;
-      d.setAttribute('aria-label', 'bed ' + (i + 1) + (p ? ', ' + p.word + ', ' + V.STAGES[Math.min(p.stage, 3)] + ', health ' + p.health + ', water ' + p.water + (p.lit ? ', lit' : ', unlit') + (p.sheltered ? ', sheltered' : ', unsheltered') : bloomEchoes[i] ? ', empty — «' + bloomEchoes[i] + '» bloomed here and is safe in the hoard' : ', empty'));
+      const amenazaHelada = !!p && g.forecast > 0 && V.frostDamage(g, p) > 0;
+      d.setAttribute('aria-label', 'bed ' + (i + 1) + (p ? ', ' + p.word + ', ' + V.STAGES[Math.min(p.stage, 3)] + ', health ' + p.health + ', water ' + p.water + (p.lit ? ', lit' : ', unlit') + (p.sheltered ? ', sheltered' : ', unsheltered') + (p && amenazaHelada ? (p.sheltered ? ', frost held off by the shelter' : ', frost threatens it tonight') : '') : bloomEchoes[i] ? ', empty — «' + bloomEchoes[i] + '» bloomed here and is safe in the hoard' : ', empty'));
       d.className = 'cama' + (injertoSel.includes(i) ? ' seleccionada' : '') + (esObjetivo(p) ? ' objetivo' : '');
       if (p) {
-        const pre = plantPicture(p);
+        const pre = plantPicture(p, amenazaHelada);
         d.classList.add('growing', 'fam-' + p.traits.fam);
         if (p.water) d.classList.add('watered');
         if (p.lit) d.classList.add('sunlit');
