@@ -59,6 +59,7 @@
   #bolsa .semilla:hover { border-color: var(--dim); }
   #bolsa .semilla.elegida { border-color: var(--bright); color: var(--bright); }
   #bolsa .semilla.vigorosa { border-style: double; border-color: var(--amber); }
+  #bolsa .semilla.tarde { opacity: .38; }
   #pista { font-size: 12px; color: var(--dim); min-height: 30px; }
   #guia { font-size: 13px; color: var(--txt); line-height: 1.45; margin-bottom: 10px; padding-left: 8px; border-left: 2px solid var(--dim); }
   .como { text-align: left; font-size: 13px; line-height: 1.5; color: var(--txt); margin: 14px 0; }
@@ -270,7 +271,10 @@
     if (!g.pouch.length) semillasEl.innerHTML = '<span style="color:var(--dim);font-size:12px">empty — wait for the wind</span>';
     g.pouch.forEach(w => {
       const s = document.createElement('span');
-      s.className = 'semilla fam-' + V.familyOf(w) + (w === semillaElegida ? ' elegida' : '') + (g.vigorous[w] ? ' vigorosa' : '');
+      // the same too-late math the hint uses, so the pouch shows it at a glance
+      const tt = V.traits(w), best = V.themeOf(w, g) === 'flame' ? 3 : V.themeOf(w, g) === 'night' ? 1 : 2;
+      const tarde = !g.over && Math.ceil(V.stageCost(tt) * 4 / best) > V.DAYS - g.day + 1;
+      s.className = 'semilla fam-' + V.familyOf(w) + (w === semillaElegida ? ' elegida' : '') + (g.vigorous[w] ? ' vigorosa' : '') + (tarde ? ' tarde' : '');
       s.textContent = w;
       s.onclick = () => { semillaElegida = w; modo = 'plantar'; pista(w); render(); };
       semillasEl.append(s);
@@ -366,7 +370,8 @@
       // use each word's real best rate before calling anything too late
       (Math.ceil(falta / (V.themeOf(w, g) === 'flame' ? 3 : V.themeOf(w, g) === 'night' ? 1 : 2)) > V.DAYS - g.day + 1
         ? ' · <b>too late: it would not bloom before the thaw</b>' : '') +
-      (g.vigorous[w] ? ' · <b>vigorous</b>' : '');
+      (g.vigorous[w] ? ' · <b>vigorous</b>' : '') +
+      (g.parents[w] ? ' · child of «' + g.parents[w][0] + '» and «' + g.parents[w][1] + '»' : '');
   }
 
   function clicCama(i) {
