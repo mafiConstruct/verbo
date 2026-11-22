@@ -251,7 +251,7 @@
     g.beds.forEach((p, i) => {
       const d = document.createElement('button');
       d.type = 'button'; d.dataset.focusKey = 'bed:' + i;
-      d.setAttribute('aria-label', 'bed ' + (i + 1) + (p ? ', ' + p.word + ', ' + V.STAGES[Math.min(p.stage, 3)] + ', health ' + p.health : ', empty'));
+      d.setAttribute('aria-label', 'bed ' + (i + 1) + (p ? ', ' + p.word + ', ' + V.STAGES[Math.min(p.stage, 3)] + ', health ' + p.health + ', water ' + p.water + (p.lit ? ', lit' : ', unlit') + (p.sheltered ? ', sheltered' : ', unsheltered') : ', empty'));
       d.className = 'cama' + (injertoSel.includes(i) ? ' seleccionada' : '') + (esObjetivo(p) ? ' objetivo' : '');
       if (p) {
         const pre = document.createElement('div');
@@ -312,6 +312,7 @@
     document.querySelectorAll('#acciones button[data-modo]').forEach(b => {
       const m = b.dataset.modo;
       b.classList.toggle('activo', modo === m);
+      b.setAttribute('aria-pressed', String(modo === m));
       b.disabled = g.over || g.actions <= 0 || (m === 'injertar' && g.actions < 2) ||
         (m === 'plantar' && !g.pouch.length);
     });
