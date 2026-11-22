@@ -243,6 +243,9 @@
         const st = document.createElement('div');
         st.className = 'estado';
         const marcas = [];
+        // name the growth stage: the glyph alone does not say how close
+        // the word is to blooming, and 'stem' is what grafting asks for
+        marcas.push(V.STAGES[Math.min(p.stage, 3)]);
         marcas.push('health ' + '•'.repeat(Math.max(0, p.health)));
         if (p.water > 0) marcas.push('≈' + p.water);
         if (p.lit) marcas.push('◉');
