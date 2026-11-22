@@ -271,7 +271,7 @@
 (function () {
   'use strict';
   const V = VERBO;
-  let g = null, modo = 'plantar', semillaElegida = null, injertoSel = [], inspectedPlant = null, bloomEchoes = {}, witherEchoes = {};
+  let g = null, modo = 'plantar', semillaElegida = null, injertoSel = [], inspectedPlant = null, bloomEchoes = {}, witherEchoes = {}, graftEchoes = {};
   // a bloom is the payoff of the whole loop; it deserves a body too.
   // Golden echo on the bed that night, small flowers in the hoard list.
   // the hoard collects flowers, not just words: the bloom it earned, on its family stem
@@ -393,6 +393,25 @@
     return svg;
   }
 
+  // the birth a graft leaves behind for the night: two tendrils intertwined
+  // where the parents stood, meeting in one spark — the word that never existed
+  function graftEchoPicture() {
+    const ns = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('viewBox', '0 0 120 92');
+    svg.setAttribute('aria-hidden', 'true'); svg.classList.add('planta', 'eco', 'injerto-echo');
+    const add = (tag, attrs) => {
+      const el = document.createElementNS(ns, tag);
+      Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
+      svg.append(el); return el;
+    };
+    add('ellipse', { cx: 60, cy: 84, rx: 26, ry: 4, fill: '#4e4430', opacity: .5 });
+    add('path', { d: 'M52 82 Q38 68 54 56 Q70 44 58 30', fill: 'none', stroke: '#e8c872', 'stroke-width': 2, 'stroke-linecap': 'round', opacity: .7 });
+    add('path', { d: 'M68 82 Q82 68 66 56 Q50 44 62 30', fill: 'none', stroke: '#8ac6d1', 'stroke-width': 2, 'stroke-linecap': 'round', opacity: .7 });
+    add('circle', { cx: 60, cy: 25, r: 4, fill: '#e8e2a0', opacity: .9 });
+    return svg;
+  }
+
   function witherEchoPicture() {
     const ns = 'http://www.w3.org/2000/svg';
     const svg = document.createElementNS(ns, 'svg');
@@ -412,7 +431,7 @@
 
   function empezar(codigo) {
     g = V.newGame(codigo);
-    modo = 'plantar'; semillaElegida = g.pouch[0] || null; injertoSel = []; inspectedPlant = null; bloomEchoes = {}; witherEchoes = {};
+    modo = 'plantar'; semillaElegida = g.pouch[0] || null; injertoSel = []; inspectedPlant = null; bloomEchoes = {}; witherEchoes = {}; graftEchoes = {};
     if (semillaElegida) pista(semillaElegida); // the card should name the selected seed from the start
     logPrevio = 0;
     $('pantalla-inicio').classList.add('escondido');
@@ -450,7 +469,7 @@
       d.type = 'button'; d.dataset.focusKey = 'bed:' + i;
       const amenazaHelada = !!p && g.forecast > 0 && V.frostDamage(g, p) > 0;
       const mordida = !!p && !!g.scarred[p.word];
-      d.setAttribute('aria-label', 'bed ' + (i + 1) + (p ? ', ' + p.word + ', ' + V.STAGES[Math.min(p.stage, 3)] + ', health ' + p.health + ', water ' + p.water + (p.lit ? ', lit' : ', unlit') + (p.sheltered ? ', sheltered' : ', unsheltered') + (mordida ? ', frost-bitten' : '') + (p && amenazaHelada ? (p.sheltered ? ', frost held off by the shelter' : ', frost threatens it tonight') : '') : bloomEchoes[i] ? ', empty — «' + bloomEchoes[i] + '» bloomed here and is safe in the hoard' : witherEchoes[i] ? ', empty — «' + witherEchoes[i] + '» went dark here this night' : ', empty'));
+      d.setAttribute('aria-label', 'bed ' + (i + 1) + (p ? ', ' + p.word + ', ' + V.STAGES[Math.min(p.stage, 3)] + ', health ' + p.health + ', water ' + p.water + (p.lit ? ', lit' : ', unlit') + (p.sheltered ? ', sheltered' : ', unsheltered') + (mordida ? ', frost-bitten' : '') + (p && amenazaHelada ? (p.sheltered ? ', frost held off by the shelter' : ', frost threatens it tonight') : '') : bloomEchoes[i] ? ', empty — «' + bloomEchoes[i] + '» bloomed here and is safe in the hoard' : witherEchoes[i] ? ', empty — «' + witherEchoes[i] + '» went dark here this night' : graftEchoes[i] ? ', empty — «' + graftEchoes[i].a + '» and «' + graftEchoes[i].b + '» intertwined here into «' + graftEchoes[i].w + '»' : ', empty'));
       d.className = 'cama' + (injertoSel.includes(i) ? ' seleccionada' : '') + (esObjetivo(p) ? ' objetivo' : '');
       if (p) {
         const pre = plantPicture(p, amenazaHelada, mordida);
@@ -494,6 +513,17 @@
         const st = document.createElement('div');
         st.className = 'estado';
         st.textContent = 'went dark this night';
+        d.append(w, st);
+      } else if (graftEchoes[i]) {
+        // the beds where two stems intertwined keep their tendrils this night:
+        // the birth stays where the player can see it before the beds free up
+        d.append(graftEchoPicture());
+        const w = document.createElement('div');
+        w.className = 'palabra eco-word';
+        w.textContent = graftEchoes[i].w;
+        const st = document.createElement('div');
+        st.className = 'estado';
+        st.textContent = 'born here this night';
         d.append(w, st);
       } else {
         const v = document.createElement('div');
@@ -723,7 +753,7 @@
       if (!semillaElegida) { semillaElegida = g.pouch[0]; if (!semillaElegida) return; }
       if (g.pouch.includes(semillaElegida) && g.actions > 0) {
         V.plantAt(g, i, semillaElegida); semillaElegida = g.pouch[0] || null;
-        delete bloomEchoes[i]; delete witherEchoes[i]; // a fresh planting retires the echo
+        delete bloomEchoes[i]; delete witherEchoes[i]; delete graftEchoes[i]; // a fresh planting retires the echo
         if (semillaElegida) pista(semillaElegida); // keep the card on the selected seed
       }
     } else if (modo === 'regar') {
@@ -751,7 +781,11 @@
       else {
         injertoSel.push(i);
         if (injertoSel.length === 2 && g.actions >= 2) {
-          const born = V.graft(g, injertoSel[0], injertoSel[1]); injertoSel = [];
+          const pa = g.beds[injertoSel[0]].word, pb = g.beds[injertoSel[1]].word;
+          const born = V.graft(g, injertoSel[0], injertoSel[1]);
+          graftEchoes[injertoSel[0]] = { a: pa, b: pb, w: born };
+          graftEchoes[injertoSel[1]] = { a: pa, b: pb, w: born };
+          injertoSel = [];
           // hand the newborn to the player: already selected, plant mode armed
           semillaElegida = born; modo = 'plantar'; pista(born);
         }
@@ -802,6 +836,7 @@
     V.endDay(g);
     bloomEchoes = {};
     witherEchoes = {};
+    graftEchoes = {};
     antes.forEach((w, i) => {
       if (w && !g.beds[i] && g.log.slice(logMark).some(l => l.includes('«' + w + '»') && l.includes('bloomed'))) bloomEchoes[i] = w;
       if (w && !g.beds[i] && g.log.slice(logMark).some(l => l.includes('«' + w + '»') && l.includes('went dark'))) witherEchoes[i] = w;
@@ -910,7 +945,7 @@
         if (p && !p.sheltered && V.frostDamage(g, p) > 0 && p.health <= 2) V.shelter(g, i);
       }
       for (let i = 0; i < V.BEDS && g.actions > 0; i++) {
-        if (!g.beds[i] && g.pouch.length && g.beds.filter(Boolean).length < 6) { V.plantAt(g, i, g.pouch[0]); delete bloomEchoes[i]; delete witherEchoes[i]; }
+        if (!g.beds[i] && g.pouch.length && g.beds.filter(Boolean).length < 6) { V.plantAt(g, i, g.pouch[0]); delete bloomEchoes[i]; delete witherEchoes[i]; delete graftEchoes[i]; }
       }
       V.endDay(g);
     }
