@@ -519,6 +519,22 @@ test('watering a bed lets a drop fall where you clicked', async ({ page }) => {
   await expect(bed.locator('.gota-cayendo')).toHaveCount(0);
 });
 
+test('giving light flashes a warm lamp over the whole row', async ({ page }) => {
+  await beginWithSeed(page, 'lantern');
+  const beds = page.locator('#camas > .cama');
+  await beds.first().click(); // plant lantern in bed 1
+  await expect(beds.nth(0).locator('.flash-lampara')).toHaveCount(0); // planting lights nothing
+  await page.click('[data-modo="luz"]');
+  await beds.first().click(); // give light: the lamp covers the whole row
+  await expect(beds.nth(0).locator('.flash-lampara')).toHaveCount(1); // the flash blooms
+  await expect(beds.nth(1).locator('.flash-lampara')).toHaveCount(1); // across all three beds
+  await expect(beds.nth(2).locator('.flash-lampara')).toHaveCount(1);
+  await expect(beds.nth(0).locator('.flash-lampara')).toHaveCount(0, { timeout: 4000 }); // and fades
+  await beds.first().click(); // already lit: nothing spent, no flash
+  await expect(page.locator('#guia')).toContainText('no word in this row needs more light');
+  await expect(beds.nth(0).locator('.flash-lampara')).toHaveCount(0);
+});
+
 test('ending the night blinks the garden into the new night', async ({ page }) => {
   await beginWithSeed(page, 'lantern');
   await page.locator('#camas > .cama').first().click(); // plant lantern
