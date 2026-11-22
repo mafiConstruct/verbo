@@ -371,6 +371,12 @@
       msg = 'frost tonight (force ' + g.forecast + '), but every word out there can take it — no shelter needed.';
     } else if (unwatered.length) {
       msg = 'press water, then click «' + unwatered[0].word + '» — a word only grows on watered nights (light makes it faster).';
+    } else if (modo === 'plantar' && !g.pouch.length) {
+      msg = 'the pouch is empty — the wind brings new words; tend what grows or end the night →';
+    } else if (modo === 'plantar' && semillaElegida && !g.beds.some(b => !b)) {
+      msg = 'every bed is taken — tend what grows, or graft two grown words to make room.';
+    } else if (modo === 'plantar' && semillaElegida && muyTarde(semillaElegida)) {
+      msg = '«' + semillaElegida + '» would not bloom before the thaw — pick another seed, or tend what is already growing.';
     } else if (modo === 'plantar' && semillaElegida && g.vigorous[semillaElegida] && g.pouch.includes(semillaElegida) && g.actions > 0 && g.beds.some(b => !b) && !muyTarde(semillaElegida)) {
       msg = '«' + semillaElegida + '» was born — click a glowing bed to plant it; a vigorous word starts strong.';
     } else if (grown.length >= 2 && g.actions >= 2) {
