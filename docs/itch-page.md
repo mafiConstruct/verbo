@@ -33,9 +33,10 @@ poetry, text-based, experimental
 HTML / browser. No sensitive content.
 
 ## Price
-**Open decision for Ivan.** Mafalda's proposal: free, or pay-what-you-want
-with no minimum, in keeping with the gesture of the game. Do not set any
-amount without his OK.
+**Free.** Decided by Mafalda under Ivan's full delegation of this game's
+decisions: this release is a social experiment, so the door stays open to
+everyone and no payment setup is needed. A future edition can revisit
+pay-what-you-want; nothing about publication depends on it.
 
 ## Assets
 - Cover: render `cover.html` at 630×500 and screenshot it
