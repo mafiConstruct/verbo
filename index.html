@@ -382,6 +382,8 @@
       msg = '«' + semillaElegida + '» would not bloom before the thaw — pick another seed, or tend what is already growing.';
     } else if (modo === 'plantar' && semillaElegida && g.vigorous[semillaElegida] && g.pouch.includes(semillaElegida) && g.actions > 0 && g.beds.some(b => !b) && !muyTarde(semillaElegida)) {
       msg = '«' + semillaElegida + '» was born — click a glowing bed to plant it; a vigorous word starts strong.';
+    } else if (modo === 'plantar' && semillaElegida && g.pouch.includes(semillaElegida) && g.beds.some(b => !b) && !muyTarde(semillaElegida)) {
+      msg = 'click a glowing bed to plant «' + semillaElegida + '» — or tend what is already growing.';
     } else if (grown.length >= 2 && g.actions >= 2) {
       msg = 'all tended. two grown words can merge into a new one with graft (2) — or end the night →';
     } else {
