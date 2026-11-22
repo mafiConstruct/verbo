@@ -338,6 +338,7 @@
     logPrevio = g.log.length;
 
     if (g.over) mostrarFinal();
+    else if (primero) camasEl.querySelector('.cama').focus({ preventScroll: true });
     else if (focusedKey) {
       const target = [...document.querySelectorAll('[data-focus-key]')].find(el => el.dataset.focusKey === focusedKey);
       if (target) target.focus({ preventScroll: true });
