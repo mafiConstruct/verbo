@@ -165,6 +165,7 @@
   }
   button:hover:not(:disabled) { border-color: var(--dim); color: var(--bright); }
   button.activo { border-color: var(--bright); color: #0a1408; background: var(--bright); font-weight: bold; }
+  button.pulsa:not(:disabled) { border-color: var(--amber); box-shadow: 0 0 8px #e8c87266; }
   button.activo:hover:not(:disabled), button.activo:focus, button.activo:focus-visible { color: #0a1408; background: var(--bright); border-color: var(--bright); }
   button:disabled { opacity: 0.35; cursor: default; }
   #noche { border-color: var(--water); color: var(--water); }
@@ -545,7 +546,7 @@
       // who pays for going without tonight (the engine counts age at dusk)
       const sedNoche = !!p && p.water === 0 && p.traits.thirst > 0 && p.age >= 1;
       const mordida = !!p && !!g.scarred[p.word];
-      d.setAttribute('aria-label', 'bed ' + (i + 1) + (p ? ', ' + p.word + ', ' + V.STAGES[Math.min(p.stage, 3)] + ', health ' + p.health + ', water ' + p.water + (p.lit ? ', lit' : ', unlit') + (p.sheltered ? ', sheltered' : ', unsheltered') + (mordida ? ', frost-bitten' : '') + (p && amenazaHelada ? (p.sheltered ? ', frost held off by the shelter' : (mordidaNoche >= p.health ? ', the frost tonight would kill it (−' + mordidaNoche + ')' : ', frost threatens it tonight (−' + mordidaNoche + ')') + (p.water > 0 ? ' and the water on it is freezing' : '')) : '') + (sedNoche ? ', will go thirsty tonight' : '') : bloomEchoes[i] ? ', empty — «' + bloomEchoes[i] + '» bloomed here and is safe in the hoard' : witherEchoes[i] ? ', empty — «' + witherEchoes[i] + '» went dark here this night' + (camaCongelada(i) ? '; the bed lies frozen — it thaws ' + (g.frozenBeds[i] === g.day ? 'tomorrow night' : 'the night after') : '') : !bloomEchoes[i] && camaCongelada(i) ? ', empty — the bed lies frozen from the frost; it thaws ' + (g.frozenBeds[i] === g.day ? 'tomorrow night' : 'the night after') : graftEchoes[i] ? ', empty — «' + graftEchoes[i].a + '» and «' + graftEchoes[i].b + '» intertwined here into «' + graftEchoes[i].w + '»' : ', empty'));
+      d.setAttribute('aria-label', 'bed ' + (i + 1) + (p ? ', ' + p.word + ', ' + V.STAGES[Math.min(p.stage, 3)] + ', health ' + p.health + ', water ' + p.water + (p.lit ? ', lit' : ', unlit') + (p.sheltered ? ', sheltered' : ', unsheltered') + (mordida ? ', frost-bitten' : '') + (p && amenazaHelada ? (p.sheltered ? ', frost held off by the shelter' : (mordidaNoche >= p.health ? ', the frost tonight would kill it (−' + mordidaNoche + ')' : ', frost threatens it tonight (−' + mordidaNoche + ')') + (p.water > 0 ? ' and the water on it is freezing' : '')) : '') + (sedNoche ? ', will go thirsty tonight' : '') + (injertoSel.includes(i) ? ', chosen for the graft' : '') : bloomEchoes[i] ? ', empty — «' + bloomEchoes[i] + '» bloomed here and is safe in the hoard' : witherEchoes[i] ? ', empty — «' + witherEchoes[i] + '» went dark here this night' + (camaCongelada(i) ? '; the bed lies frozen — it thaws ' + (g.frozenBeds[i] === g.day ? 'tomorrow night' : 'the night after') : '') : !bloomEchoes[i] && camaCongelada(i) ? ', empty — the bed lies frozen from the frost; it thaws ' + (g.frozenBeds[i] === g.day ? 'tomorrow night' : 'the night after') : graftEchoes[i] ? ', empty — «' + graftEchoes[i].a + '» and «' + graftEchoes[i].b + '» intertwined here into «' + graftEchoes[i].w + '»' : ', empty'));
       d.className = 'cama' + (injertoSel.includes(i) ? ' seleccionada' : '') + (esObjetivo(p, i) ? ' objetivo' : '') + (!p && camaCongelada(i) ? ' congelada' : '');
       if (p) {
         const pre = plantPicture(p, amenazaHelada, mordida);
@@ -655,8 +656,25 @@
     });
 
     // Refresh the last inspected word after growth, loss, or a new night.
+    // the graft preview: the child-to-be, with the vigorous head start and
+    // the first parent's theme the engine would actually give it
+    if (modo === 'injertar' && injertoSel.length === 2 && g.beds[injertoSel[0]] && g.beds[injertoSel[1]]) {
+      const pa2 = g.beds[injertoSel[0]].word, pb2 = g.beds[injertoSel[1]].word;
+      const born = V.blend(pa2, pb2);
+      const bt = V.traits(born);
+      const btheme = V.themeOf(pa2, g);
+      const bsed = bt.thirst === 0 ? 'none' : bt.thirst === 1 ? 'normal' : 'high';
+      const brate = btheme === 'flame' ? 3 : btheme === 'night' ? 1 : 2;
+      const brem = Math.max(1, V.stageCost(bt) * 4 - 2);
+      const blit = Math.ceil(brem / brate);
+      $('pista').innerHTML = 'would be born: «<b>' + born + '</b>» · ' + (THEME_BLURB[btheme] || 'a word') +
+        ' · thirst ' + bsed + ' · resists frost ' + bt.hardiness +
+        ' · blooms in ~' + brem + ' watered nights (' + blit + ' with light every night)' +
+        (blit > V.DAYS - g.day + 1 ? ' · <b>too late: it would not bloom before the thaw</b>' : '') +
+        ' · <b>vigorous</b> · child of «' + pa2 + '» and «' + pb2 + '»';
+    }
     // A removed plant must never leave a ghost description behind.
-    if (inspectedPlant && g.beds.includes(inspectedPlant)) pista(inspectedPlant.word, inspectedPlant);
+    else if (inspectedPlant && g.beds.includes(inspectedPlant)) pista(inspectedPlant.word, inspectedPlant);
     else if (semillaElegida && g.pouch.includes(semillaElegida)) pista(semillaElegida);
     else { inspectedPlant = null; $('pista').textContent = 'the pouch is empty — click a planted word to inspect it.'; }
 
@@ -667,6 +685,12 @@
       b.setAttribute('aria-pressed', String(modo === m));
       b.disabled = g.over || g.actions <= 0 || (m === 'injertar' && g.actions < 2) ||
         (m === 'plantar' && !g.pouch.length);
+      if (m === 'injertar') {
+        if (modo === 'injertar' && injertoSel.length === 2 && g.beds[injertoSel[0]] && g.beds[injertoSel[1]]) {
+          b.textContent = 'graft «' + V.blend(g.beds[injertoSel[0]].word, g.beds[injertoSel[1]].word) + '» (2) →';
+          b.classList.add('pulsa');
+        } else { b.textContent = 'graft (2)'; b.classList.remove('pulsa'); }
+      }
     });
     $('noche').disabled = g.over;
     // the hoard: a row of flowers earned, each on its family stem — the payoff accumulates visibly
@@ -767,6 +791,9 @@
       msg = 'only night words are unlit, and they shun the light — the lamp would not help them.';
     } else if (modo === 'abrigar' && needsShelter.length) {
       msg = 'shelter armed — click each glowing word; the frost would hurt it tonight.';
+    } else if (modo === 'injertar' && injertoSel.length === 2 && g.beds[injertoSel[0]] && g.beds[injertoSel[1]]) {
+      const ga = g.beds[injertoSel[0]].word, gb = g.beds[injertoSel[1]].word, gc = V.blend(ga, gb);
+      msg = '«' + ga + '» + «' + gb + '» = «' + gc + '» — both parents go, their beds free up, and «' + gc + '» joins the pouch vigorous. press graft again to confirm; click a chosen word to let it go.';
     } else if (modo === 'injertar' && injertoSel.length === 1 && g.beds[injertoSel[0]]) {
       msg = '«' + g.beds[injertoSel[0]].word + '» selected — click a second glowing word; they merge into a word that never existed.';
     } else if (modo === 'injertar' && plants.length) {
@@ -862,6 +889,23 @@
       (g.parents[w] ? ' · child of «' + g.parents[w][0] + '» and «' + g.parents[w][1] + '»' : '');
   }
 
+  // the graft commits here, after the player has seen the child and the cost:
+  // both parents go, the beds free up, the newborn joins the pouch vigorous
+  function confirmarInjerto() {
+    if (modo !== 'injertar' || injertoSel.length !== 2 || g.actions < 2) return;
+    const A = g.beds[injertoSel[0]], B = g.beds[injertoSel[1]];
+    if (!A || !B) { injertoSel = []; render(); return; }
+    const pa = A.word, pb = B.word;
+    const born = V.graft(g, injertoSel[0], injertoSel[1]);
+    if (!born) { injertoSel = []; render(); return; }
+    graftEchoes[injertoSel[0]] = { a: pa, b: pb, w: born };
+    graftEchoes[injertoSel[1]] = { a: pa, b: pb, w: born };
+    injertoSel = [];
+    // hand the newborn to the player: already selected, plant mode armed
+    semillaElegida = born; modo = 'plantar'; pista(born);
+    render();
+  }
+
   let gotaReciente = null;
   let lamparaReciente = null;
   function clicCama(i) {
@@ -902,17 +946,10 @@
       if (!p || p.stage < 2) { injertoSel = []; }
       else if (injertoSel.includes(i)) { injertoSel = injertoSel.filter(x => x !== i); }
       else {
+        // a third stem replaces the second pick; the graft itself only happens
+        // when the player confirms it on the graft button after seeing the trade
+        if (injertoSel.length >= 2) injertoSel = [injertoSel[0]];
         injertoSel.push(i);
-        if (injertoSel.length === 2 && g.actions >= 2) {
-          const pa = g.beds[injertoSel[0]].word, pb = g.beds[injertoSel[1]].word;
-          const born = V.graft(g, injertoSel[0], injertoSel[1]);
-          graftEchoes[injertoSel[0]] = { a: pa, b: pb, w: born };
-          graftEchoes[injertoSel[1]] = { a: pa, b: pb, w: born };
-          injertoSel = [];
-          // hand the newborn to the player: already selected, plant mode armed
-          semillaElegida = born; modo = 'plantar'; pista(born);
-        }
-        else if (injertoSel.length === 2) injertoSel = [i];
       }
     }
     render();
@@ -948,7 +985,11 @@
   }
 
   document.querySelectorAll('#acciones button[data-modo]').forEach(b => {
-    b.onclick = () => { modo = b.dataset.modo; injertoSel = []; render(); };
+    b.onclick = () => {
+      // pressing graft with two stems chosen confirms the trade shown in the guide
+      if (b.dataset.modo === 'injertar' && modo === 'injertar' && injertoSel.length === 2) { confirmarInjerto(); return; }
+      modo = b.dataset.modo; injertoSel = []; render();
+    };
   });
   $('noche').onclick = () => {
     if (g.over) return;
