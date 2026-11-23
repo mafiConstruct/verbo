@@ -1192,3 +1192,10 @@ test('a word the frost would kill tonight does not claim it will bloom', async (
   await expect(bed).not.toHaveClass(/florece/);
   await expect(bed.locator('.estado')).not.toContainText('blooms tonight');
 });
+
+test('a bed status line has readable contrast (not the dim UI green)', async ({ page }) => {
+  await beginWithSeed(page, 'ash');
+  const bed = page.locator('#camas > .cama').first();
+  await bed.click();
+  await expect(bed.locator('.estado')).toHaveCSS('color', 'rgb(134, 181, 138)');
+});
