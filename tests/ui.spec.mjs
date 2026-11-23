@@ -1256,6 +1256,7 @@ test('hoard value adds repeated grafted and plain blooms without conflating name
     VERBO.newGame = code => {
       const state = original(code || 'hoard-value-fixture');
       state.poem = ['lolt', 'ash', 'lolt']; state.bloomed = 3;
+      state.bloomRecords=state.poem.map(word=>({word,grafted:word==='lolt'}));
       state.vigorous.lolt = true;
       return state;
     };
@@ -1266,4 +1267,24 @@ test('hoard value adds repeated grafted and plain blooms without conflating name
   await expect(page.locator('#tesoro .tesoro-flor').filter({hasText:'«lolt»'})).toContainText('2 blooms · 6 value');
   await expect(page.locator('#tesoro .tesoro-flor').filter({hasText:'«ash»'})).toContainText('1 value');
   await expect(page.locator('#tesoro')).toHaveAttribute('aria-label', /3 blooms — hoard value 7/);
+});
+
+test('hoard keeps earlier plain salt at one after salt becomes a grafted name', async ({ page }) => {
+  await page.goto('/index.html');
+  // Controlled collision fixture: same spelling, two distinct bloom origins.
+  await page.evaluate(() => {
+    const original=VERBO.newGame;
+    VERBO.newGame=code=>{
+      const state=original(code||'salt-origin-fixture');
+      state.poem=['salt','salt'];state.bloomed=2;
+      state.bloomRecords=[{word:'salt',grafted:false},{word:'salt',grafted:true}];
+      state.vigorous.salt=true;
+      return state;
+    };
+  });
+  await page.click('#comenzar');
+  await expect(page.locator('#caja-tesoro h3')).toHaveText('the hoard · value 4');
+  await expect(page.locator('#tesoro .tesoro-flor')).toHaveCount(1);
+  await expect(page.locator('#tesoro small')).toHaveText('2 blooms · 4 value');
+  await page.screenshot({path:'/downloads/wh-salt-origin-fixture.png'});
 });
