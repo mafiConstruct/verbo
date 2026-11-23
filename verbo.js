@@ -368,9 +368,13 @@
   function finish(state) {
     state.over = true;
     const fams = new Set(state.poem.map(w => traits(w).fam)).size;
+    // a born (grafted) word that blooms counts triple: grafting costs two growing
+    // words and two actions, so it has to pay in the hoard, not only in the verse
+    const born = state.poem.filter(w => state.vigorous[w]).length;
+    const value = state.poem.length + 2 * born;
     let title;
-    if (state.poem.length >= 10) title = 'The hoard sings';
-    else if (state.poem.length >= 6) title = 'Just enough';
+    if (value >= 10) title = 'The hoard sings';
+    else if (value >= 6) title = 'Just enough';
     else if (state.poem.length >= 1) title = 'Almost nothing';
     else title = 'Silence';
     const lostUniq = [...new Set(state.lost)].length;
@@ -383,6 +387,7 @@
       lines: composePoem(state),
       days: Math.min(state.day - 1, DAYS),
       bloomed: state.bloomed,
+      born, value,
       grafts: state.grafts,
       lost: state.lost.length,
       diversity: fams,
