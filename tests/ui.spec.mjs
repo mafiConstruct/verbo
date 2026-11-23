@@ -76,28 +76,38 @@ test('a typed seed code reproduces the same garden', async ({ page }) => {
 
 test('two grown words graft into a new word in the pouch', async ({ page }) => {
   test.setTimeout(60000);
-  await begin(page, 'seed-graft2'); // engine-verified: mature pair on day 3
-  // policy proven against the engine: keep 2 beds planted, water everything
+  await begin(page, 'seed-graft8');
+  const actionsLeft = async () => !(await page.locator('#acciones-restantes').textContent()).startsWith('\u25cb');
+  const arm = async modo => {
+    const btn = page.locator('button[data-modo="' + modo + '"]');
+    if ((await btn.getAttribute('aria-pressed')) !== 'true') await btn.click();
+  };
+  // policy: shelter what the frost threatens (a wet word freezes harder, and a
+  // frost-killed bed lies frozen two nights), plant up to two, water the rest
   for (let night = 0; night < 14; night++) {
-    // graftable = living plant at stem stage or beyond (aria stage names)
-    const glowGraftable = await page.locator('#camas > .cama').evaluateAll(
+    const graftable = await page.locator('#camas > .cama').evaluateAll(
       els => els.filter(el => /, (stem|bud),/.test(el.getAttribute('aria-label') || '')).length
     );
-    if (glowGraftable >= 2) break;
-    // plant up to two (matches the engine-proven schedule: both in on day 1)
-    for (let k = 0; k < 2; k++) {
-      const plants = await page.locator('#camas > .cama:has(.planta:not(.eco))').count();
-      const empty = await page.locator('#camas > .cama:not(:has(.planta:not(.eco)))').count();
-      const seeds = await page.locator('#semillas > .semilla').count();
-      const actions = await page.locator('#acciones-restantes').textContent();
-      if (plants < 2 && empty > 0 && seeds > 0 && !actions.startsWith('○')) {
-        await page.locator('#camas > .cama:not(:has(.planta:not(.eco)))').first().click();
+    if (graftable >= 2) break;
+    for (const bed of await page.locator('#camas > .cama:has(.planta:not(.eco))').all()) {
+      if (!(await actionsLeft())) break;
+      if (/frost threatens/.test(await bed.getAttribute('aria-label') || '')) {
+        await arm('abrigar');
+        await bed.click();
       }
     }
-    // water every unwatered plant (≈ mark absent in .estado)
+    while ((await page.locator('#camas > .cama:has(.planta:not(.eco))').count()) < 2 && (await actionsLeft())) {
+      const empty = page.locator('#camas > .cama:not(:has(.planta:not(.eco))):not(.congelada)');
+      if ((await empty.count()) === 0 || (await page.locator('#semillas > .semilla').count()) === 0) break;
+      await arm('plantar');
+      await empty.first().click();
+    }
     for (const bed of await page.locator('#camas > .cama:has(.planta:not(.eco))').all()) {
+      if (!(await actionsLeft())) break;
+      const aria = (await bed.getAttribute('aria-label')) || '';
+      if (/frost threatens|frost held off/.test(aria)) continue;
       if (!/≈/.test(await bed.locator('.estado').textContent())) {
-        await page.click('button[data-modo="regar"]');
+        await arm('regar');
         await bed.click();
         await expect(bed.locator('.estado')).toContainText('≈');
       }
@@ -117,7 +127,7 @@ test('two grown words graft into a new word in the pouch', async ({ page }) => {
 
 test('a graft leaves intertwined tendrils where the parents stood', async ({ page }) => {
   test.setTimeout(60000);
-  await begin(page, 'seed-graft2'); // same engine-verified pair as the graft test
+  await begin(page, 'seed-graft8'); // same engine-verified pair as the graft test
   for (let night = 0; night < 14; night++) {
     const glowGraftable = await page.locator('#camas > .cama').evaluateAll(
       els => els.filter(el => /, (stem|bud),/.test(el.getAttribute('aria-label') || '')).length
@@ -125,11 +135,11 @@ test('a graft leaves intertwined tendrils where the parents stood', async ({ pag
     if (glowGraftable >= 2) break;
     for (let k = 0; k < 2; k++) {
       const plants = await page.locator('#camas > .cama:has(.planta:not(.eco))').count();
-      const empty = await page.locator('#camas > .cama:not(:has(.planta:not(.eco)))').count();
+      const empty = await page.locator('#camas > .cama:not(:has(.planta:not(.eco))):not(.congelada)').count();
       const seeds = await page.locator('#semillas > .semilla').count();
       const actions = await page.locator('#acciones-restantes').textContent();
       if (plants < 2 && empty > 0 && seeds > 0 && !actions.startsWith('○')) {
-        await page.locator('#camas > .cama:not(:has(.planta:not(.eco)))').first().click();
+        await page.locator('#camas > .cama:not(:has(.planta:not(.eco))):not(.congelada)').first().click();
       }
     }
     for (const bed of await page.locator('#camas > .cama:has(.planta:not(.eco))').all()) {
@@ -855,4 +865,43 @@ test('a word still wet at dusk is named before tomorrow\'s frost, and a dry one 
   });
   await page.click('#comenzar');
   await expect(page.locator('#guia')).not.toContainText('still be wet at dusk');
+});
+
+test('a bed the frost kills on lies frozen for two nights, then takes root again', async ({ page }) => {
+  await page.goto('/index.html');
+  await page.evaluate(() => {
+    const original = VERBO.newGame;
+    VERBO.newGame = code => {
+      const state = original('hoardcheck');
+      state.sky = state.sky.map(() => 0); state.sky[0] = 3; // night 1: force-3 frost
+      state.forecast = 3; // newGame computed it from the original sky before we overrode
+      state.pouch = ['ember', 'crow'];
+      return state;
+    };
+  });
+  await page.click('#comenzar');
+  const bed1 = page.locator('#camas > .cama').nth(0);
+  const bed2 = page.locator('#camas > .cama').nth(1);
+  await bed1.click(); // plant ember (flame, no hardiness): force 3 takes it whole
+  await page.click('#noche');
+  // night 2: the loss and the frozen bed are both where the player can see them
+  await expect(page.locator('#registro')).toContainText('the bed lies frozen');
+  await expect(bed1).toHaveClass(/congelada/);
+  await expect(bed1).toHaveAttribute('aria-label', /went dark here this night/);
+  await expect(bed1).toHaveAttribute('aria-label', /the bed lies frozen/);
+  await expect(bed1).not.toHaveClass(/objetivo/); // no planting glow on ice
+  await expect(bed2).toHaveClass(/objetivo/); // but the next bed takes seeds
+  // clicking the frozen bed explains and spends nothing
+  await bed1.click();
+  await expect(page.locator('#guia')).toContainText('no action spent');
+  await expect(page.locator('#acciones-restantes')).toHaveText('●●●');
+  // plant crow in the free bed, then wait out the freeze
+  await bed2.click();
+  await expect(bed2).toHaveAttribute('aria-label', /crow, seed/);
+  await page.click('#noche'); // night 3: still frozen (alone now, the echo retired by crow? no — bed 1 echo persists)
+  await expect(bed1).toHaveAttribute('aria-label', /frozen from the frost|the bed lies frozen/);
+  await expect(bed1).not.toHaveClass(/objetivo/);
+  await page.click('#noche'); // night 4: thawed
+  await expect(bed1).not.toHaveClass(/congelada/);
+  await expect(bed1).toHaveClass(/objetivo/);
 });
