@@ -779,3 +779,80 @@ test('a bloomed word that never met the frost carries no mark', async ({ page })
   await expect(crowChip).toHaveCount(1);
   await expect(crowChip).not.toHaveClass(/marcada/);
 });
+
+test('the sky shows tomorrow, and tomorrow keeps its promise', async ({ page }) => {
+  await begin(page, 'seed-2xk5l0'); // dealt sky: [1,0,0,0,2,1,1,2,...] — night 5 is frost force 2
+  const manana = page.locator('#manana');
+  const bed = page.locator('#camas > .cama').first();
+  await expect(manana).toHaveText('clear'); // night 2 is calm
+  await bed.click(); // plant lantern
+  for (let n = 1; n <= 3; n++) { // nights 1-3: calm tomorrows
+    await page.click('[data-modo="regar"]');
+    await bed.click();
+    await page.click('#noche');
+    if (n === 1) { // night-1 frost bit the unsheltered wet flame word at dawn (−3); it lives
+      await expect(bed).toHaveAttribute('aria-label', /health 1, water 1/);
+      await expect(bed).toHaveAttribute('aria-label', /frost-bitten/);
+    }
+  }
+  await expect(page.locator('#dia')).toHaveText('4');
+  await expect(manana).toHaveText('frost, force 2'); // night 5, seen one night ahead
+  await expect(manana).toHaveClass(/pronostico-frio/);
+  // honesty: yesterday's tomorrow is today's tonight
+  await page.click('[data-modo="regar"]');
+  await bed.click();
+  await page.click('[data-modo="abrigar"]');
+  await bed.click();
+  await page.click('#noche');
+  await expect(page.locator('#dia')).toHaveText('5');
+  await expect(page.locator('#pronostico')).toHaveText('frost, force 2');
+});
+
+test('the last night promises the thaw', async ({ page }) => {
+  await beginWithSeed(page, 'marrow', false, 14);
+  await expect(page.locator('#manana')).toHaveText('the thaw');
+  await expect(page.locator('#manana')).toHaveClass(/pronostico-deshielo/);
+});
+
+test('a word still wet at dusk is named before tomorrow\'s frost, and a dry one is not', async ({ page }) => {
+  await page.goto('/index.html');
+  await page.evaluate(() => {
+    const original = VERBO.newGame;
+    VERBO.newGame = code => {
+      const state = original('hoardcheck');
+      state.day = 4; state.forecast = 0;
+      state.sky = state.sky.map(() => 0); state.sky[4] = 2; // night 5: frost force 2
+      state.pouch = ['lantern'];
+      VERBO.plantAt(state, 0, 'lantern');
+      state.beds[0].water = 2; // topped up: tonight's growth drinks one, one stays
+      state.actions = 3;
+      return state;
+    };
+  });
+  await page.click('#comenzar');
+  const guia = page.locator('#guia');
+  await expect(guia).toContainText('Tomorrow brings frost (force 2)');
+  await expect(guia).toContainText('«lantern» would still be wet at dusk');
+  await expect(page.locator('#noche')).toHaveClass(/listo/); // the warning asks nothing of tonight
+  // drink it down to one: tonight's growth will finish it, no warning
+  await page.evaluate(() => {
+    // the same garden, one sip less
+    const ev = new Event('noop'); void ev;
+  });
+  await page.reload();
+  await page.evaluate(() => {
+    const original = VERBO.newGame;
+    VERBO.newGame = code => {
+      const state = original('hoardcheck');
+      state.day = 4; state.forecast = 0;
+      state.sky = state.sky.map(() => 0); state.sky[4] = 2;
+      state.pouch = ['lantern'];
+      VERBO.plantAt(state, 0, 'lantern');
+      state.beds[0].water = 1; // growth drinks it tonight: dry at tomorrow's dusk
+      state.actions = 3;
+      return state;
+    };
+  });
+  await page.click('#comenzar');
+  await expect(page.locator('#guia')).not.toContainText('still be wet at dusk');
+});
