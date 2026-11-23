@@ -570,9 +570,16 @@ test('the thaw poem rises verse by verse', async ({ page }) => {
   await expect(page.locator('#final-stats')).not.toContainText('1 words');
   // the hoard value is on the ending, and it agrees with the born count it names
   const st = await page.locator('#final-stats').textContent();
-  const born = /\((\d+) born, counted triple\)/.exec(st);
+  const born = /\((\d+) grafted blooms?, counted triple\)/.exec(st);
   expect(st).toMatch(/hoard value \d+/);
   expect(Number(/hoard value (\d+)/.exec(st)[1])).toBe(1 + 2 * (born ? Number(born[1]) : 0));
+  await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async text => { window.copiedPoem = text; } } }));
+  await page.click('#copiar-poema');
+  await expect(page.locator('#copiar-poema')).toContainText('copied');
+  const copy = await page.evaluate(() => window.copiedPoem);
+  expect(copy).toContain(st.split('seed:')[0].trim());
+  expect(copy).not.toContain('1 grafts');
+
 });
 
 test('a bloomed word stands in flower in the thaw garden', async ({ page }) => {
