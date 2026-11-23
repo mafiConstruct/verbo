@@ -56,6 +56,8 @@
     return (state && state.bornThemes && state.bornThemes[w]) || THEME_MAP[w] || 'loam';
   }
 
+  function plantTheme(p, state) { return p.theme || themeOf(p.word, state); }
+
   // ---------- Traits derived from the word itself ----------
   const VOWELS = 'aeiou';
   function traits(word) {
@@ -134,7 +136,7 @@
     }
     const t = traits(word);
     const vig = !!state.vigorous[word];
-    state.beds[bed] = { word, grafted: vig, parents: vig && state.parents[word] ? state.parents[word].slice() : null, stage: 0, progress: vig ? 2 : 0, water: 0, health: vig ? 5 : 4, age: 0, dry: 0, lit: false, sheltered: false, traits: t };
+    state.beds[bed] = { word, theme: themeOf(word, state), scarred: false, grafted: vig, parents: vig && state.parents[word] ? state.parents[word].slice() : null, stage: 0, progress: vig ? 2 : 0, water: 0, health: vig ? 5 : 4, age: 0, dry: 0, lit: false, sheltered: false, traits: t };
     state.pouch.splice(state.pouch.indexOf(word), 1);
     state.actions--;
     say(state, 'you planted «' + word + '».');
@@ -143,7 +145,7 @@
   function water(state, bed) {
     // row watering: the chosen bed drinks fully; its row neighbors get a sip
     // a water word holds water well: one watering lasts longer
-    state.beds[bed].water = themeOf(state.beds[bed].word, state) === 'tide' ? 3 : 2;
+    state.beds[bed].water = plantTheme(state.beds[bed], state) === 'tide' ? 3 : 2;
     const row = Math.floor(bed / 3);
     for (const n of [bed - 1, bed + 1]) {
       if (n >= 0 && n < BEDS && Math.floor(n / 3) === row && state.beds[n]) {
@@ -169,7 +171,7 @@
     state.pouch.push(w);
     state.vigorous[w] = true;
     state.parents[w] = [A.word, B.word];
-    state.bornThemes[w] = themeOf(A.word, state); // a born word keeps its first parent's theme
+    state.bornThemes[w] = plantTheme(A, state); // a born word keeps its first parent's theme
     state.grafts++;
     state.actions -= 2;
     say(state, 'you grafted «' + A.word + '» with «' + B.word + '»: «' + w + '» was born, a new and vigorous word.');
@@ -186,7 +188,7 @@
   function frostDamage(state, p) {
     if (state.forecast <= 0) return 0;
     const base = Math.max(0, state.forecast - p.traits.hardiness);
-    const th = themeOf(p.word, state);
+    const th = plantTheme(p, state);
     // wet words freeze harder: watering grows a word, but into a frost night
     // it is a gamble — dry words take less. At dusk the engine stamps
     // wetAtDusk so growth spending the water does not dry the word first.
@@ -215,7 +217,7 @@
       if (p.water > 0 && p.stage < 4) {
         // a fire word feeds on light: lit, it grows twice as fast again
         // a night word shuns the light: being lit does not speed it up
-        const th0 = themeOf(p.word, state);
+        const th0 = plantTheme(p, state);
         p.progress += 1 + (p.lit && th0 !== 'night' ? 1 : 0) + (p.lit && th0 === 'flame' ? 1 : 0);
         p.stage = Math.min(4, Math.floor(p.progress / stageCost(p.traits)));
         p.water--;
@@ -227,10 +229,10 @@
       // frost: night words are at home in it; fire words suffer
       let frostTookIt = false;
       if (frost > 0 && !p.sheltered) {
-        const th = themeOf(p.word, state);
+        const th = plantTheme(p, state);
         const base = Math.max(0, frost - p.traits.hardiness);
         const dmg = frostDamage(state, p);
-        if (dmg > 0) { p.health -= dmg; say(state, 'the frost hit ' + tag(p, i) + ' (−' + dmg + ')' + (p.wetAtDusk ? ' — wet, it froze harder.' : '.')); if (p.health > 0) state.scarred[p.word] = true; else frostTookIt = true; }
+        if (dmg > 0) { p.health -= dmg; say(state, 'the frost hit ' + tag(p, i) + ' (−' + dmg + ')' + (p.wetAtDusk ? ' — wet, it froze harder.' : '.')); if (p.health > 0) { p.scarred = true; state.scarred[p.word] = true; } else frostTookIt = true; }
         else if (th === 'night' && base > 0) say(state, tag(p, i) + ' is at home in the frost.');
       }
       // death
@@ -255,7 +257,7 @@
       const p = state.beds[i];
       if (p && p.stage >= 4) {
         state.poem.push(p.word);
-        state.bloomRecords.push({word:p.word, grafted:!!p.grafted, parents:p.parents ? p.parents.slice() : null});
+        state.bloomRecords.push({word:p.word, grafted:!!p.grafted, theme:plantTheme(p, state), scarred:!!p.scarred, parents:p.parents ? p.parents.slice() : null});
         state.bloomed++;
         // one bloom, one seed back: replanting a saved word is a choice,
         // not a way to fill the garden with copies of it
@@ -321,7 +323,7 @@
     // the poem remembers what happened: a word that took frost and lived
     // gets its own verse, and a born word arrives with its parents' names.
     // Those words leave the enumeration below.
-    const hero = kept.find(w => state.scarred[w]);
+    const hero = kept.find(w => state.bloomRecords.some(r => r.word === w && r.scarred));
     const bornRecord = state.bloomRecords.find(record => record.grafted && record.parents && kept.includes(record.word));
     const bornChild = bornRecord ? bornRecord.word : null;
     const bloomedBorn = w => state.bloomRecords.some(record => record.word === w && record.grafted);
@@ -335,7 +337,7 @@
     const byTheme = {};
     for (const w of words) {
       if (RARE.includes(w)) { rares.push(w); continue; }
-      const t = themeOf(w, state);
+      const t = state.bloomRecords.find(r => r.word === w)?.theme || themeOf(w, state);
       (byTheme[t] = byTheme[t] || []).push(w);
     }
     // verses follow theme adjacency: a theme with enough words holds its own verse;
@@ -401,7 +403,7 @@
 
   return {
     newGame, endDay, plantAt, water, light, shelter, graft, finish, stageCost,
-    traits, blend, familyOf, themeOf, composePoem, aliveCount, frostDamage,
+    traits, blend, familyOf, themeOf, plantTheme, composePoem, aliveCount, frostDamage,
     LEXICON, RARE, THEME_MAP, STAGES, BEDS, DAYS, ACTIONS_PER_DAY, frostFor, dealSky,
     mulberry32, hashStr,
   };
