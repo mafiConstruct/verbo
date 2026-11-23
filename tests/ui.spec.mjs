@@ -946,3 +946,49 @@ test('a word the frost would take tonight says so, and shelter lifts the sentenc
   await expect(bed.locator('.aviso-helada')).toHaveText('');
   await expect(bed).toHaveAttribute('aria-label', /frost held off by the shelter/);
 });
+
+test('a dry word that will go thirsty tonight says so, and watering lifts it', async ({ page }) => {
+  await begin(page, 'seed-2xk5l0');
+  const bed = page.locator('#camas > .cama').nth(1);
+  await page.locator('#semillas .semilla', { hasText: 'kettle' }).click();
+  await bed.click(); // plant kettle (thirst normal), never water it
+  await page.click('#noche'); // night 2: calm, kettle is now old enough to thirst
+  await expect(bed.locator('.aviso-sed')).toHaveText('it will go thirsty tonight (−1)');
+  await expect(bed).toHaveAttribute('aria-label', /will go thirsty tonight/);
+  await page.click('[data-modo="regar"]');
+  await bed.click(); // water it: the warning lifts
+  await expect(bed.locator('.aviso-sed')).toHaveCount(0);
+  await expect(bed).not.toHaveAttribute('aria-label', /will go thirsty tonight/);
+});
+
+test('a word without thirst never shows the thirsty warning', async ({ page }) => {
+  await begin(page, 'seed-2xk5l0');
+  const bed = page.locator('#camas > .cama').nth(1);
+  await page.locator('#semillas .semilla', { hasText: 'crow' }).click();
+  await bed.click(); // plant crow (thirst none), never water it
+  await page.click('#noche');
+  await expect(bed.locator('.aviso-sed')).toHaveCount(0);
+  await expect(bed).not.toHaveAttribute('aria-label', /will go thirsty tonight/);
+});
+
+test('frost and thirst warnings stack on a word that faces both', async ({ page }) => {
+  // declared fixture: calm first night, force-1 frost on night 2 — not a played run
+  await page.goto('/index.html');
+  await page.evaluate(() => {
+    const original = VERBO.newGame;
+    VERBO.newGame = code => {
+      const state = original('hoardcheck');
+      state.sky = state.sky.map(() => 0); state.sky[1] = 1;
+      state.pouch = ['lantern', 'crow'];
+      return state;
+    };
+  });
+  await page.click('#comenzar');
+  const bed = page.locator('#camas > .cama').first();
+  await bed.click(); // plant lantern (flame, thirst normal), never water it
+  await page.click('#noche'); // night 2: frost force 1, lantern dry and old enough to thirst
+  await expect(bed.locator('.aviso-helada')).toHaveText('the frost will bite tonight (−2)');
+  await expect(bed.locator('.aviso-sed')).toHaveText('it will go thirsty tonight (−1)');
+  await expect(bed).toHaveAttribute('aria-label', /frost threatens it tonight \(−2\)/);
+  await expect(bed).toHaveAttribute('aria-label', /will go thirsty tonight/);
+});
