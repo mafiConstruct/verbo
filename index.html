@@ -797,17 +797,23 @@
     if (g.poem.length) {
       const kept = [...new Set(g.poem)];
       const tesoroEl = $('tesoro');
+      const hoardValue = g.poem.reduce((sum, w) => sum + (g.vigorous[w] ? 3 : 1), 0);
+      cajaTesoro.querySelector('h3').textContent = 'the hoard · value ' + hoardValue;
       tesoroEl.innerHTML = '';
       kept.forEach(w => {
         const chip = document.createElement('span');
         chip.className = 'tesoro-flor fam-' + V.familyOf(w) + (g.scarred[w] ? ' marcada' : '');
         chip.append(hoardFlower());
         const word = document.createElement('b');
+        const blooms = g.poem.filter(x => x === w).length;
         word.textContent = '«' + w + '»';
-        chip.append(word);
+        const value = document.createElement('small');
+        value.style.cssText = 'color:#86b58a;font-size:11px;font-style:normal';
+        value.textContent = (blooms > 1 ? blooms + ' blooms · ' : '') + (blooms * (g.vigorous[w] ? 3 : 1)) + ' value';
+        chip.append(word, value);
         tesoroEl.append(chip);
       });
-      tesoroEl.setAttribute('aria-label', 'the hoard: ' + kept.map(w => '«' + w + '»' + (g.scarred[w] ? ' (frost-marked)' : '')).join(', ') + (g.poem.length > kept.length ? ' — ' + g.poem.length + ' blooms' : ''));
+      tesoroEl.setAttribute('aria-label', 'the hoard: ' + kept.map(w => '«' + w + '»' + (g.scarred[w] ? ' (frost-marked)' : '')).join(', ') + (g.poem.length > kept.length ? ' — ' + g.poem.length + ' blooms' : '') + ' — hoard value ' + hoardValue);
       if (g.poem.length > kept.length) {
         const cuenta = document.createElement('span');
         cuenta.className = 'tesoro-cuenta';
