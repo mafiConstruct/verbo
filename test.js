@@ -170,14 +170,30 @@ ok(endings['Silence'] === undefined || endings['Silence'] <= 10, 'silence is rar
   // a bloomed scarred word gets its own verse
   const g = V.newGame('scar-poem');
   V.plantAt(g, 0, 'ember');
+  g.sky = g.sky.map(() => 0); // calm season; only night 1 bites
   g.forecast = 1;
   while (!g.over) {
     if (g.actions > 0 && g.beds[0]) V.water(g, 0);
     V.endDay(g);
-    if (g.day > 2) g.forecast = 0;
   }
   const hero = g.ending.lines.find(l => l.includes('stood in the frost'));
   ok(hero && hero.includes('ember'), 'poem names the scarred word: ' + JSON.stringify(g.ending.lines));
+}
+// 9. The sky is dealt with the game and never moves
+{
+  const a = V.newGame('seed-2xk5l0'), b = V.newGame('seed-2xk5l0');
+  ok(JSON.stringify(a.sky) === JSON.stringify(b.sky), 'same seed, same sky');
+  ok(JSON.stringify(a.sky.slice(0, 8)) === '[1,0,0,0,2,1,1,2]', 'seed-2xk5l0 opens ' + JSON.stringify(a.sky.slice(0, 8)) + ' (pinned: UI tests play this weather)');
+  ok(a.forecast === 1, 'night 1 forecast comes from the sky');
+  // play consumes rng (water, shelter, wind) but the sky does not move
+  const g = V.newGame('seed-2xk5l0');
+  V.plantAt(g, 0, g.pouch[0]);
+  for (let n = 1; n <= 6 && !g.over; n++) {
+    ok(g.forecast === g.sky[g.day - 1], 'night ' + n + ' forecast = sky[' + (g.day - 1) + ']');
+    if (g.actions > 0 && g.beds[0]) V.water(g, 0);
+    V.endDay(g);
+  }
+  ok(g.day > 1 && g.forecast === g.sky[g.day - 1], 'sky still authoritative after rng-consuming nights');
 }
 console.log(fails === 0 ? 'MEMORY OK' : 'MEMORY FAILURES: ' + fails);
 console.log(fails === 0 ? 'WEATHER OK' : 'WEATHER FAILURES: ' + fails);
