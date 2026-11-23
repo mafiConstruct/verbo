@@ -234,6 +234,20 @@ ok(endings['Silence'] === undefined || endings['Silence'] <= 10, 'silence is rar
   const r2 = V.graft(g, 0, 1);
   ok(r2 !== null && g.grafts === 1, 'two stems graft into a new word');
 }
+{
+  // hoard value: a bloomed born word counts triple, a plain one counts once
+  const g = V.newGame('hoard-a');
+  g.poem = ['ember', 'ivy', 'owl']; g.vigorous = {}; V.finish(g);
+  ok(g.ending.value === 3 && g.ending.born === 0, 'plain blooms count once');
+  const h = V.newGame('hoard-b');
+  h.poem = ['ember', 'ivy', 'owl']; h.vigorous = { ivy: true }; V.finish(h);
+  ok(h.ending.born === 1 && h.ending.value === 5 && h.ending.bloomed === 0, 'one born bloom is worth three');
+  const k = V.newGame('hoard-c');
+  k.poem = ['ember', 'ivy', 'owl', 'elm']; k.vigorous = { ivy: true, owl: true }; V.finish(k);
+  ok(k.ending.value === 8 && k.ending.title === 'Just enough', 'born blooms lift the title: 4 words, 2 born = 8 = Just enough');
+  const z = V.newGame('hoard-d'); z.poem = []; V.finish(z);
+  ok(z.ending.value === 0 && z.ending.title === 'Silence', 'no blooms, no value');
+}
 console.log(fails === 0 ? 'MEMORY OK' : 'MEMORY FAILURES: ' + fails);
 console.log(fails === 0 ? 'WEATHER OK' : 'WEATHER FAILURES: ' + fails);
 console.log(fails === 0 ? 'ALL OK' : fails + ' FAILURES');
