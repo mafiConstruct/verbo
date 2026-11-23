@@ -697,3 +697,33 @@ test('a wet word facing frost unsheltered shows frozen droplets', async ({ page 
   await expect(bed.locator('svg.planta .gota-helada')).toHaveCount(0);
   await expect(bed).toHaveAttribute('aria-label', /frost held off by the shelter/);
 });
+
+test('a word the frost wounds shows its toll drifting over the bed at dawn', async ({ page }) => {
+  await begin(page, 'seed-2xk5l0'); // night 1 frost force 1: unsheltered wet lantern takes −3 and lives
+  const bed = page.locator('#camas > .cama').first();
+  await bed.click(); // plant lantern
+  await page.click('[data-modo="regar"]');
+  await bed.click(); // water it into the frost night
+  await page.click('#noche');
+  const merma = bed.locator('.merma');
+  await expect(merma).toHaveCount(1);
+  await expect(merma).toHaveText('−3'); // base 1 + wet 1 + flame theme 1
+  await expect(merma).toHaveClass(/merma-helada/);
+  // the wound is also told in words: the bed label carries the bite
+  await expect(bed).toHaveAttribute('aria-label', /frost-bitten/);
+});
+
+test('a word that went thirsty shows a dry toll, not an icy one', async ({ page }) => {
+  await begin(page, 'seed-2xk5l0'); // night 1 frost force 1, night 2 calm; lantern (thirst 1) parches from age 2
+  const bed = page.locator('#camas > .cama').first();
+  await bed.click(); // plant lantern
+  await page.click('[data-modo="abrigar"]');
+  await bed.click(); // shelter keeps the frost off so only thirst can bite later
+  await page.click('#noche'); // night 1: sheltered, unwatered — no wound yet
+  await expect(bed.locator('.merma')).toHaveCount(0);
+  await page.click('#noche'); // night 2: calm, still unwatered — thirst bites
+  const merma = bed.locator('.merma');
+  await expect(merma).toHaveCount(1);
+  await expect(merma).toHaveText('−1');
+  await expect(merma).toHaveClass(/merma-seca/);
+});
