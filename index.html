@@ -134,6 +134,8 @@
   @media (max-width: 760px) { .cama .planta { height: 68px; } }
   .cama .palabra { font-size: 13px; margin-bottom: 3px; }
   .cama .estado { font-size: 11px; color: var(--dim); min-height: 14px; }
+  .cama .aviso-helada { font-size: 10px; color: var(--water); min-height: 12px; }
+  .cama .aviso-helada.mortal { color: var(--hurt); }
   .cama .vacia { color: #22361f; font-size: 13px; padding-bottom: 30px; text-align: center; }
   .fam-light { color: var(--light); } .fam-water { color: var(--water); }
   .fam-earth { color: var(--earth); } .fam-stone { color: var(--stone); }
@@ -533,8 +535,13 @@
       const d = document.createElement('button');
       d.type = 'button'; d.dataset.focusKey = 'bed:' + i;
       const amenazaHelada = !!p && g.forecast > 0 && V.frostDamage(g, p) > 0;
+      // the bite, counted ahead of the night so the water decision shows its
+      // cost: sheltered words are safe; during the day wetAtDusk is gone, so
+      // frostDamage reads the water on the word right now — watering a
+      // threatened word deepens the number the moment you commit to it
+      const mordidaNoche = !!p && !p.sheltered && g.forecast > 0 ? V.frostDamage(g, p) : 0;
       const mordida = !!p && !!g.scarred[p.word];
-      d.setAttribute('aria-label', 'bed ' + (i + 1) + (p ? ', ' + p.word + ', ' + V.STAGES[Math.min(p.stage, 3)] + ', health ' + p.health + ', water ' + p.water + (p.lit ? ', lit' : ', unlit') + (p.sheltered ? ', sheltered' : ', unsheltered') + (mordida ? ', frost-bitten' : '') + (p && amenazaHelada ? (p.sheltered ? ', frost held off by the shelter' : ', frost threatens it tonight' + (p.water > 0 ? ' and the water on it is freezing' : '')) : '') : bloomEchoes[i] ? ', empty — «' + bloomEchoes[i] + '» bloomed here and is safe in the hoard' : witherEchoes[i] ? ', empty — «' + witherEchoes[i] + '» went dark here this night' + (camaCongelada(i) ? '; the bed lies frozen — it thaws ' + (g.frozenBeds[i] === g.day ? 'tomorrow night' : 'the night after') : '') : !bloomEchoes[i] && camaCongelada(i) ? ', empty — the bed lies frozen from the frost; it thaws ' + (g.frozenBeds[i] === g.day ? 'tomorrow night' : 'the night after') : graftEchoes[i] ? ', empty — «' + graftEchoes[i].a + '» and «' + graftEchoes[i].b + '» intertwined here into «' + graftEchoes[i].w + '»' : ', empty'));
+      d.setAttribute('aria-label', 'bed ' + (i + 1) + (p ? ', ' + p.word + ', ' + V.STAGES[Math.min(p.stage, 3)] + ', health ' + p.health + ', water ' + p.water + (p.lit ? ', lit' : ', unlit') + (p.sheltered ? ', sheltered' : ', unsheltered') + (mordida ? ', frost-bitten' : '') + (p && amenazaHelada ? (p.sheltered ? ', frost held off by the shelter' : (mordidaNoche >= p.health ? ', the frost tonight would kill it (−' + mordidaNoche + ')' : ', frost threatens it tonight (−' + mordidaNoche + ')') + (p.water > 0 ? ' and the water on it is freezing' : '')) : '') : bloomEchoes[i] ? ', empty — «' + bloomEchoes[i] + '» bloomed here and is safe in the hoard' : witherEchoes[i] ? ', empty — «' + witherEchoes[i] + '» went dark here this night' + (camaCongelada(i) ? '; the bed lies frozen — it thaws ' + (g.frozenBeds[i] === g.day ? 'tomorrow night' : 'the night after') : '') : !bloomEchoes[i] && camaCongelada(i) ? ', empty — the bed lies frozen from the frost; it thaws ' + (g.frozenBeds[i] === g.day ? 'tomorrow night' : 'the night after') : graftEchoes[i] ? ', empty — «' + graftEchoes[i].a + '» and «' + graftEchoes[i].b + '» intertwined here into «' + graftEchoes[i].w + '»' : ', empty'));
       d.className = 'cama' + (injertoSel.includes(i) ? ' seleccionada' : '') + (esObjetivo(p, i) ? ' objetivo' : '') + (!p && camaCongelada(i) ? ' congelada' : '');
       if (p) {
         const pre = plantPicture(p, amenazaHelada, mordida);
@@ -556,7 +563,10 @@
         if (p.lit) marcas.push('◉');
         if (p.sheltered) marcas.push('sheltered');
         st.textContent = marcas.join(' · ');
-        d.append(pre, w, st);
+        const av = document.createElement('div');
+        av.className = 'aviso-helada' + (mordidaNoche > 0 && mordidaNoche >= p.health ? ' mortal' : '');
+        if (mordidaNoche > 0) av.textContent = mordidaNoche >= p.health ? 'the frost tonight would take it (−' + mordidaNoche + ')' : 'the frost will bite tonight (−' + mordidaNoche + ')';
+        d.append(pre, w, st, av);
       } else if (bloomEchoes[i]) {
         // the bed where a word just bloomed keeps its flower this night:
         // the success stays where the player can see it before the bed frees up
