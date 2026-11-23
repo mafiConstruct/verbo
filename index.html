@@ -267,7 +267,7 @@
     <div id="muestra-inicio" aria-hidden="true"></div>
     <div class="como">
       <p><b>1.</b> Click a glowing garden bed to plant the selected word — or pick another in your pouch first.</p>
-      <p><b>2.</b> Water what you want to grow; a lamp speeds a whole row for one night, and fire words feed on it. When frost is forecast, shelter your words — night words don't mind it.</p>
+      <p><b>2.</b> Water what you want to grow; a lamp speeds a whole row for one night, and fire words feed on it. When frost is forecast, shelter your words — night words don't mind it, and wet words freeze harder.</p>
       <p><b>3.</b> After 14 nights, every word that bloomed becomes your poem.</p>
     </div>
     <div class="fila">
@@ -719,11 +719,13 @@
       msg = homebody
         ? 'frost tonight (force ' + g.forecast + '): «' + homebody.word + '» is at home in it — shelter the glowing words.'
         : 'frost tonight (force ' + g.forecast + '): press shelter, then click each glowing word.';
+      if (unwatered.length) msg += ' Watering grows a word but wets it for the frost (+1 bite) — shelter it after, or leave it dry.';
     } else if (g.forecast > 0 && plants.some(p => !p.sheltered)) {
       msg = 'frost tonight (force ' + g.forecast + '), but every word out there can take it — no shelter needed.';
     } else if (unwatered.length) {
       msg = 'press water, then click «' + unwatered[0].word + '» — a word only grows on watered nights' +
-        (V.themeOf(unwatered[0].word, g) === 'night' ? '; this night word does not need a lamp.' : ' (light makes it faster).');
+        (V.themeOf(unwatered[0].word, g) === 'night' ? '; this night word does not need a lamp.' : ' (light makes it faster).') +
+        (g.forecast > 0 ? ' Careful: wet words freeze harder tonight (+1 bite) — shelter it after, or leave it dry.' : '');
     } else if (modo === 'plantar' && !g.pouch.length) {
       msg = g.day === V.DAYS ? 'the pouch is empty. tend what grows or end the night →'
         : 'the pouch is empty — the wind brings new words; tend what grows or end the night →';
