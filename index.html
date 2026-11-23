@@ -256,6 +256,24 @@
   .cama .palabra.marchita-word { color: var(--dim); font-style: italic; }
   .escondido { display: none !important; }
   .nota { color: var(--dim); font-size: 12px; margin-top: 14px; }
+/* Keep controls and garden stable when graft details expand. */
+body { align-items: flex-start; }
+#camas { align-self: flex-start; grid-auto-rows: minmax(220px,auto); }
+#lateral { display:flex; flex-direction:column; } #caja-acciones { order:-1; }
+#acciones button[data-modo="injertar"] { min-width:110px; min-height:3em; }
+#guia { position:static; order:0; min-height:0; box-sizing:border-box; }
+@media(max-width:760px){#camas { align-self: stretch; grid-auto-rows: minmax(220px,auto); } #guia { min-height:0; }}
+@media(max-width:760px){
+  main { display:flex; flex-direction:column; }
+  #lateral { display:contents; }
+  #caja-acciones { order:0; position:static; background:var(--bg); }
+  #camas { order:1; }
+  #bolsa { order:3; }
+  #caja-tesoro { order:4; }
+  #caja-registro { order:5; }
+  #guia { position:static; order:1; height:9em; overflow-y:scroll; margin-top:8px; border-bottom:1px dotted var(--dim); }
+  #camas { order:2; }
+}
 </style>
 </head>
 <body>
@@ -270,10 +288,10 @@
       seed <b id="codigo"></b>
     </span>
   </header>
-  <div id="guia"></div>
   <main>
     <div id="camas"></div>
     <div id="lateral">
+      <div id="guia" tabindex="0" aria-label="garden guidance, scroll for more if needed"></div>
       <div class="caja" id="bolsa">
         <h3>seed pouch <span style="font-weight:normal;font-size:11px;color:#86b58a">(watered nights to bloom · thirst 0-2 · frost shield 0-3)</span></h3>
         <div id="semillas"></div>
@@ -294,7 +312,7 @@
           <button id="noche">end the night →</button>
         </div>
       </div>
-      <div class="caja">
+      <div class="caja" id="caja-registro">
         <h3>log</h3>
         <div id="registro"></div>
       </div>
