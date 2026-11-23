@@ -171,9 +171,13 @@
     if (state.forecast <= 0) return 0;
     const base = Math.max(0, state.forecast - p.traits.hardiness);
     const th = themeOf(p.word, state);
-    if (th === 'night') return Math.max(0, base - 1);
-    if (th === 'flame') return base + 1;
-    return base;
+    // wet words freeze harder: watering grows a word, but into a frost night
+    // it is a gamble — dry words take less. At dusk the engine stamps
+    // wetAtDusk so growth spending the water does not dry the word first.
+    const wet = (p.wetAtDusk !== undefined ? p.wetAtDusk : p.water > 0) ? 1 : 0;
+    if (th === 'night') return Math.max(0, base - 1) + wet;
+    if (th === 'flame') return base + 1 + wet;
+    return base + wet;
   }
 
   function endDay(state) {
@@ -190,6 +194,7 @@
       const p = state.beds[i];
       if (!p) continue;
       p.age++;
+      p.wetAtDusk = p.water > 0;
       // growth
       if (p.water > 0 && p.stage < 4) {
         // a fire word feeds on light: lit, it grows twice as fast again
@@ -208,7 +213,7 @@
         const th = themeOf(p.word, state);
         const base = Math.max(0, frost - p.traits.hardiness);
         const dmg = frostDamage(state, p);
-        if (dmg > 0) { p.health -= dmg; say(state, 'the frost hit ' + tag(p, i) + ' (−' + dmg + ').'); if (p.health > 0) state.scarred[p.word] = true; }
+        if (dmg > 0) { p.health -= dmg; say(state, 'the frost hit ' + tag(p, i) + ' (−' + dmg + ')' + (p.wetAtDusk ? ' — wet, it froze harder.' : '.')); if (p.health > 0) state.scarred[p.word] = true; }
         else if (th === 'night' && base > 0) say(state, tag(p, i) + ' is at home in the frost.');
       }
       // death
@@ -219,6 +224,7 @@
         continue;
       }
       p.lit = false; p.sheltered = false;
+      delete p.wetAtDusk;
     }
 
     // blooming at dawn
