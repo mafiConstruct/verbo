@@ -219,6 +219,10 @@
   #tesoro .tesoro-flor b { color: var(--amber); font-weight: normal; }
   #tesoro .tesoro-flor svg { width: 20px; height: 27px; }
   #tesoro .tesoro-cuenta { color: var(--dim); font-size: 11px; font-style: italic; align-self: center; }
+  /* the frost's mark on a saved word: ice on the bloom that lived through it */
+  .marcada b { color: #9fd4e0 !important; }
+  .marcada svg { filter: drop-shadow(0 0 4px #9fd4e077); }
+  .verso-helada { color: #9fd4e0; font-style: italic; }
   .cama .planta.eco { filter: drop-shadow(0 0 7px #e8c87255); }
   .cama .palabra.eco-word { color: var(--amber); font-style: italic; }
   .cama .palabra.marchita-word { color: var(--dim); font-style: italic; }
@@ -628,14 +632,14 @@
       tesoroEl.innerHTML = '';
       kept.forEach(w => {
         const chip = document.createElement('span');
-        chip.className = 'tesoro-flor fam-' + V.familyOf(w);
+        chip.className = 'tesoro-flor fam-' + V.familyOf(w) + (g.scarred[w] ? ' marcada' : '');
         chip.append(hoardFlower());
         const word = document.createElement('b');
         word.textContent = '«' + w + '»';
         chip.append(word);
         tesoroEl.append(chip);
       });
-      tesoroEl.setAttribute('aria-label', 'the hoard: ' + kept.map(w => '«' + w + '»').join(', ') + (g.poem.length > kept.length ? ' — ' + g.poem.length + ' blooms' : ''));
+      tesoroEl.setAttribute('aria-label', 'the hoard: ' + kept.map(w => '«' + w + '»' + (g.scarred[w] ? ' (frost-marked)' : '')).join(', ') + (g.poem.length > kept.length ? ' — ' + g.poem.length + ' blooms' : ''));
       if (g.poem.length > kept.length) {
         const cuenta = document.createElement('span');
         cuenta.className = 'tesoro-cuenta';
@@ -1007,7 +1011,7 @@
     const fs = $('final-sub');
     if (e.subtitle) { fs.textContent = e.subtitle; fs.style.display = ''; } else { fs.style.display = 'none'; }
     // the poem the winter earned rises verse by verse, not as a dumped page
-    $('final-poema').innerHTML = e.lines.map(l => '<div class="verso">' + l + '</div>').join('');
+    $('final-poema').innerHTML = e.lines.map(l => '<div class="verso' + (/ stood in the frost\.?$/.test(l) ? ' verso-helada' : '') + '">' + l + '</div>').join('');
     [...$('final-poema').children].forEach((v, i) => { v.style.animationDelay = (i * 0.65) + 's'; });
     // the thaw garden: what bloomed stands in flower, what winter keeps lies withered
     const jardin = $('final-jardin');
@@ -1015,7 +1019,7 @@
     const keptWords = [...new Set(g.poem)];
     keptWords.forEach(w => {
       const flor = document.createElement('span');
-      flor.className = 'final-flor fam-' + V.familyOf(w);
+      flor.className = 'final-flor fam-' + V.familyOf(w) + (g.scarred[w] ? ' marcada' : '');
       flor.append(hoardFlower());
       const nombre = document.createElement('b');
       nombre.textContent = '«' + w + '»';
@@ -1035,7 +1039,7 @@
     if (keptWords.length || winterKept.length) {
       jardin.setAttribute('role', 'img');
       jardin.setAttribute('aria-label',
-        (keptWords.length ? 'the garden the thaw found: ' + keptWords.map(w => '«' + w + '»').join(', ') : 'nothing bloomed') +
+        (keptWords.length ? 'the garden the thaw found: ' + keptWords.map(w => '«' + w + '»' + (g.scarred[w] ? ' (frost-marked)' : '')).join(', ') : 'nothing bloomed') +
         (winterKept.length ? ' — winter keeps ' + winterKept.map(w => '«' + w + '»').join(', ') : ''));
     } else {
       jardin.removeAttribute('role');
