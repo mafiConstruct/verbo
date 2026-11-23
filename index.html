@@ -134,6 +134,10 @@
   #pista { font-size: 12px; color: var(--dim); min-height: 30px; }
   #guia { font-size: 13px; color: var(--txt); line-height: 1.45; margin-bottom: 10px; padding-left: 8px; border-left: 2px solid var(--dim); }
   .como { text-align: left; font-size: 13px; line-height: 1.5; color: var(--txt); margin: 14px 0; }
+  #muestra-inicio { display: flex; justify-content: center; gap: 30px; margin: 4px 0 2px; }
+  #muestra-inicio .muestra { display: flex; flex-direction: column; align-items: center; }
+  #muestra-inicio .muestra .planta { width: 72px; height: 55px; }
+  #muestra-inicio .muestra .muestra-word { font-style: italic; font-size: 12px; margin-top: 1px; }
   #pista b { color: var(--txt); font-weight: normal; }
 
   #acciones { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -260,6 +264,7 @@
       The vault holds the last words.<br>
       Tend them: they are the only thing that grows here.
     </p>
+    <div id="muestra-inicio" aria-hidden="true"></div>
     <div class="como">
       <p><b>1.</b> Click a glowing garden bed to plant the selected word — or pick another in your pouch first.</p>
       <p><b>2.</b> Water what you want to grow; a lamp speeds a whole row for one night, and fire words feed on it. When frost is forecast, shelter your words — night words don't mind it.</p>
@@ -908,6 +913,16 @@
     camasEl.classList.add('paso-noche');
     if (g.forecast > 0) camasEl.classList.add('paso-noche-fria');
   }
+  // the promise before the rules: one word, grown — stem, lamp, bloom
+  (function () {
+    const w = 'ember', fam = V.familyOf(w), box = $('muestra-inicio');
+    [[1, { water: 1 }], [2, { water: 2, lit: true }], [3, {}]].forEach(([stage, extra]) => {
+      const fig = document.createElement('div'); fig.className = 'muestra fam-' + fam;
+      fig.append(plantPicture(Object.assign({ word: w, stage, water: 0, lit: false, sheltered: false, health: 4 }, extra), false, false));
+      const label = document.createElement('div'); label.className = 'muestra-word'; label.textContent = '«' + w + '»';
+      fig.append(label); box.append(fig);
+    });
+  })();
   $('comenzar').onclick = () => empezar($('entrada-siembra').value);
   $('entrada-siembra').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); empezar($('entrada-siembra').value); } });
   // the poem is the payoff of the run; let the player take it with them
