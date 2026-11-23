@@ -1311,3 +1311,42 @@ for (const grafted of [false, true]) {
     await page.screenshot({path:'/downloads/wh-verse-origin-'+(grafted?'grafted':'plain')+'-fixture.png'});
   });
 }
+
+for (const scarred of [false,true]) {
+  test('frost mark follows the bloomed copy, not another copy: '+scarred, async({page})=>{
+    await page.goto('/index.html');
+    await page.evaluate(scarred=>{
+      const original=VERBO.newGame;
+      VERBO.newGame=code=>{
+        const g=original('scar-origin-fixture');g.day=14;g.forecast=0;
+        g.poem=['salt'];g.bloomed=1;g.scarred.salt=true;
+        g.bloomRecords=[{word:'salt',grafted:false,parents:null,theme:'tide',scarred}];return g;
+      };
+    },scarred);
+    await page.click('#comenzar');
+    await expect(page.locator('#tesoro .marcada')).toHaveCount(scarred?1:0);
+    await page.click('#noche');
+    if(scarred) await expect(page.locator('#final-poema')).toContainText('stood in the frost');
+    else await expect(page.locator('#final-poema')).not.toContainText('stood in the frost');
+    await expect(page.locator('#final-jardin .marcada')).toHaveCount(scarred?1:0);
+    await page.waitForTimeout(2500);
+    await page.screenshot({path:'/downloads/wh-scar-origin-'+scarred+'-fixture.png'});
+  });
+}
+
+test('an existing tide salt keeps its three water drops after same-name leaf graft',async({page})=>{
+  await page.goto('/index.html');
+  await page.evaluate(()=>{
+    const original=VERBO.newGame;VERBO.newGame=()=>{
+      const g=original('theme-origin-fixture');g.pouch=['salt','sap','silt'];
+      VERBO.plantAt(g,0,'salt');VERBO.plantAt(g,1,'sap');VERBO.plantAt(g,2,'silt');
+      g.beds[1].stage=2;g.beds[2].stage=2;g.actions=3;VERBO.graft(g,1,2);
+      VERBO.plantAt(g,1,'salt');VERBO.water(g,0);VERBO.water(g,1);g.actions=3;return g;
+    };
+  });
+  await page.click('#comenzar');
+  const beds=page.locator('#camas > .cama');
+  await expect(beds.nth(0)).toContainText('≈3');
+  await expect(beds.nth(1)).toContainText('≈2');
+  await page.screenshot({path:'/downloads/wh-theme-origin-fixture.png'});
+});
