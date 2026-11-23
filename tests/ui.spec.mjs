@@ -632,6 +632,30 @@ test('giving light flashes a warm lamp over the whole row', async ({ page }) => 
   await expect(beds.nth(0).locator('.flash-lampara')).toHaveCount(0);
 });
 
+test('light armed names what the lamp would buy, word by word (fixture)', async ({ page }) => {
+  await beginWithSeed(page, 'lantern'); // declared fixture: one fire word, calm night
+  const beds = page.locator('#camas > .cama');
+  await beds.first().click(); // plant lantern in bed 1
+  await page.click('button[data-modo="regar"]');
+  await beds.first().click(); // water it
+  await page.click('button[data-modo="luz"]');
+  await expect(page.locator('#guia')).toContainText('«lantern» would feed on the light');
+  await expect(beds.first()).toHaveAttribute('aria-label', /would feed on the light tonight/);
+  await beds.first().click(); // commit the lamp
+  await expect(page.locator('#guia')).toContainText('the lamp covers the row tonight — «lantern» feeds on it.');
+});
+
+test('a dry word says the light pays only if watered too (fixture)', async ({ page }) => {
+  await beginWithSeed(page, 'lantern'); // declared fixture: one fire word, calm night
+  const beds = page.locator('#camas > .cama');
+  await beds.first().click(); // plant lantern, leave it dry
+  await page.click('button[data-modo="luz"]');
+  await expect(page.locator('#guia')).toContainText('«lantern» is dry — the light pays only if watered tonight too');
+  await expect(beds.first()).toHaveAttribute('aria-label', /dry — the light pays only if it is watered tonight too/);
+  await beds.first().click(); // light the dry row anyway: the lamp teaches, does not block
+  await expect(page.locator('#guia')).toContainText('water them and the light pays off');
+});
+
 test('a word the frost takes is closed in by the cold at dawn', async ({ page }) => {
   await begin(page, 'seed-2xk5l0');
   const bed = page.locator('#camas > .cama').first();
