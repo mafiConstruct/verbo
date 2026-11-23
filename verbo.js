@@ -134,7 +134,7 @@
     }
     const t = traits(word);
     const vig = !!state.vigorous[word];
-    state.beds[bed] = { word, grafted: vig, stage: 0, progress: vig ? 2 : 0, water: 0, health: vig ? 5 : 4, age: 0, dry: 0, lit: false, sheltered: false, traits: t };
+    state.beds[bed] = { word, grafted: vig, parents: vig && state.parents[word] ? state.parents[word].slice() : null, stage: 0, progress: vig ? 2 : 0, water: 0, health: vig ? 5 : 4, age: 0, dry: 0, lit: false, sheltered: false, traits: t };
     state.pouch.splice(state.pouch.indexOf(word), 1);
     state.actions--;
     say(state, 'you planted «' + word + '».');
@@ -255,7 +255,7 @@
       const p = state.beds[i];
       if (p && p.stage >= 4) {
         state.poem.push(p.word);
-        state.bloomRecords.push({word:p.word, grafted:!!p.grafted});
+        state.bloomRecords.push({word:p.word, grafted:!!p.grafted, parents:p.parents ? p.parents.slice() : null});
         state.bloomed++;
         // one bloom, one seed back: replanting a saved word is a choice,
         // not a way to fill the garden with copies of it
@@ -322,7 +322,9 @@
     // gets its own verse, and a born word arrives with its parents' names.
     // Those words leave the enumeration below.
     const hero = kept.find(w => state.scarred[w]);
-    const bornChild = kept.find(w => state.parents[w]);
+    const bornRecord = state.bloomRecords.find(record => record.grafted && record.parents && kept.includes(record.word));
+    const bornChild = bornRecord ? bornRecord.word : null;
+    const bloomedBorn = w => state.bloomRecords.some(record => record.word === w && record.grafted);
     const words = kept.filter(w => w !== hero && w !== bornChild).slice(0, 9);
     // verses group words that are ABOUT the same thing: one theme per verse,
     // biggest theme first; a verse holds at most 3 words and 16 letters,
@@ -354,13 +356,13 @@
     pushVerse();
     const bornLast = line => {
       const ws = line.split(', ');
-      if (!ws.some(w => state.vigorous[w])) return line;
-      return ws.filter(w => !state.vigorous[w]).concat(ws.filter(w => state.vigorous[w])).join(', ');
+      if (!ws.some(w => bloomedBorn(w))) return line;
+      return ws.filter(w => !bloomedBorn(w)).concat(ws.filter(w => bloomedBorn(w))).join(', ');
     };
     const lines = themed.map(bornLast).concat(rares);
     if (hero) lines.push('«' + hero + '» stood in the frost.');
-    if (bornChild) lines.push('«' + bornChild + '», child of «' + state.parents[bornChild][0] + '» and «' + state.parents[bornChild][1] + '».');
-    else if (words.some(w => state.vigorous[w])) lines.push('one of these words was never heard before.');
+    if (bornChild) lines.push('«' + bornChild + '», child of «' + bornRecord.parents[0] + '» and «' + bornRecord.parents[1] + '».');
+    else if (words.some(w => bloomedBorn(w))) lines.push('one of these words was never heard before.');
     lines.push(CLOSERS[dominantFamily(state.poem)]);
     if (lostNames.length) lines.push(winterKeeps(lostNames));
     return lines;
