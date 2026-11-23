@@ -1153,6 +1153,7 @@ test('a graft shows its child and its cost before committing, and lets you recon
   await expect(page.locator('.graft-choices')).toContainText('KEEP THE PARENTS');
   await expect(page.locator('.graft-choices')).toContainText('Costs 2 actions, then 1 to plant');
   await expect(page.locator('.graft-choices meter')).toHaveCount(3);
+  await expect(page.locator('.graft-now')).toContainText('no growth tonight');
   await page.screenshot({path:'/downloads/wh-graft-comparison-desktop.png'});
   await page.setViewportSize({width:390,height:844});
   await page.locator('.graft-choices').scrollIntoViewIfNeeded();
@@ -1356,4 +1357,23 @@ test('an existing tide salt keeps its three water drops after same-name leaf gra
   await expect(beds.nth(0)).toContainText('≈3');
   await expect(beds.nth(1)).toContainText('≈2');
   await page.screenshot({path:'/downloads/wh-theme-origin-fixture.png'});
+});
+
+
+test('grafting with only two actions says the child cannot be planted tonight',async({page})=>{
+  await page.goto('/index.html');
+  // Controlled action-budget fixture, not a played run.
+  await page.evaluate(()=>{const original=VERBO.newGame;VERBO.newGame=()=>{
+    const g=original('graft-two-actions-fixture');g.pouch=['loam','silt'];
+    VERBO.plantAt(g,0,'loam');VERBO.plantAt(g,1,'silt');
+    for(const p of g.beds.filter(Boolean)){p.stage=2;p.progress=2;}g.actions=2;return g;
+  };});
+  await page.click('#comenzar');await page.click('[data-modo="injertar"]');
+  await page.locator('#camas>.cama').nth(0).click();await page.locator('#camas>.cama').nth(1).click();
+  await expect(page.locator('.graft-now')).toContainText('cannot plant it until tomorrow');
+  await expect(page.locator('.graft-now')).not.toContainText('no growth tonight');
+  await page.screenshot({path:'/downloads/wh-graft-two-actions-fixture.png'});
+  await page.click('[data-modo="injertar"]');await expect(page.locator('#acciones-restantes')).toContainText('○○○');
+  await expect(page.locator('#semillas')).toContainText('lolt');
+  await expect(page.locator('#acciones-numero')).toHaveText('0/3');
 });
