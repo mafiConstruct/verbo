@@ -1398,3 +1398,25 @@ for(const progress of [2,6]){
   }
  });
 }
+
+for(const width of [1152,800,320]){
+ test('graft confirmation does not jump after second parent at '+width+'px',async({page})=>{
+  await page.setViewportSize({width,height:720});
+  await page.goto('/index.html');
+  // Controlled mature-parent fixture, not a played season.
+  await page.evaluate(()=>{const original=VERBO.newGame;VERBO.newGame=()=>{
+   const g=original('graft-layout-fixture');g.pouch=['loam','silt'];
+   VERBO.plantAt(g,0,'loam');VERBO.plantAt(g,1,'silt');
+   for(const p of g.beds.filter(Boolean)){p.stage=2;p.progress=2;}g.actions=3;return g;
+  };});
+  await page.click('#comenzar');await page.click('[data-modo="injertar"]');
+  const top=()=>page.locator('[data-modo="injertar"]').evaluate(e=>e.getBoundingClientRect().top+scrollY);
+  const before=await top();
+  await page.locator('#camas>.cama').nth(0).click();
+  await page.locator('#camas>.cama').nth(1).click();
+  expect(Math.abs(await top()-before)).toBeLessThanOrEqual(1);
+  await page.click('[data-modo="injertar"]');
+  await expect(page.locator('#semillas')).toContainText('lolt');
+  await expect(page.locator('#acciones-numero')).toHaveText('1/3');
+ });
+}
