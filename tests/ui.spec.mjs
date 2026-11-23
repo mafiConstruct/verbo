@@ -419,7 +419,7 @@ test('bed accessible names expose water and nightly care, including resets', asy
   await bed.click();
   await expect(bed).toHaveAccessibleName(/water 2, lit, unsheltered$/);
   await page.click('#noche');
-  await expect(bed).toHaveAccessibleName(/water 1, unlit, unsheltered(, will bloom tonight)?$/);
+  await expect(bed).toHaveAccessibleName(/water 1, unlit, unsheltered, will bloom tonight$/);
 });
 
 test('action buttons expose which tool is armed and reset to plant each night', async ({ page }) => {
@@ -1163,6 +1163,7 @@ test('a watered word one night from blooming glows and says so, then blooms', as
   await page.click('#noche');
   await expect(bed).toHaveClass(/florece/);
   await expect(bed).toHaveAccessibleName(/will bloom tonight/);
+  await expect(bed.locator('.estado')).toContainText('blooms tonight');
   await page.click('#noche');
   await expect(bed).not.toHaveClass(/florece/);
 });
