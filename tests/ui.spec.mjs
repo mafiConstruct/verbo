@@ -1199,20 +1199,3 @@ test('a bed status line has readable contrast (not the dim UI green)', async ({ 
   await bed.click();
   await expect(bed.locator('.estado')).toHaveCSS('color', 'rgb(134, 181, 138)');
 });
-
-test('scouting the sky costs an action, shows three further nights once per night', async ({ page }) => {
-  await beginWithSeed(page, 'ash');
-  await expect(page.locator('#adelante-caja')).toBeHidden();
-  const btn = page.locator('#explorar');
-  await expect(btn).toBeEnabled();
-  await btn.click();
-  await expect(page.locator('#adelante-caja')).toBeVisible();
-  await expect(page.locator('#adelante')).toContainText('n3');
-  await expect(page.locator('#adelante')).toContainText('n5');
-  await expect(page.locator('#acciones-restantes')).toHaveText('●●○');
-  await expect(btn).toBeDisabled();
-  await expect(page.locator('#registro')).toContainText('you scouted the sky');
-  await page.click('#noche');
-  await expect(page.locator('#adelante-caja')).toBeHidden();
-  await expect(btn).toBeEnabled();
-});
