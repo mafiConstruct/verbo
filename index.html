@@ -94,7 +94,21 @@
     25% { opacity: .8; }
     100% { transform: scale(.35); opacity: 0; }
   }
-  @media (prefers-reduced-motion: reduce) { .cama .gota-cayendo, .cama .flash-lampara, .cama .flash-flor, .cama .flash-escarcha { display: none; } }
+  /* the night's toll you can read: what each bed lost drifts up and fades */
+  .cama .merma {
+    position: absolute; left: 50%; top: 22%; margin-left: -14px;
+    font-size: 14px; font-weight: bold; letter-spacing: .5px;
+    pointer-events: none; z-index: 3; opacity: 0;
+    animation: merma-sube 1.8s ease-out .5s forwards;
+  }
+  .cama .merma-helada { color: #9fd4e0; text-shadow: 0 0 7px #9fd4e088; }
+  .cama .merma-seca { color: #c9a26b; text-shadow: 0 0 7px #c9a26b66; }
+  @keyframes merma-sube {
+    0% { transform: translateY(7px); opacity: 0; }
+    25% { opacity: 1; }
+    100% { transform: translateY(-15px); opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) { .cama .gota-cayendo, .cama .flash-lampara, .cama .flash-flor, .cama .flash-escarcha, .cama .merma { display: none; } }
   #camas.paso-noche { animation: pasar-noche .85s ease-in-out; }
   #camas.paso-noche-fria { animation-name: pasar-noche-fria; }
   @keyframes pasar-noche {
@@ -870,6 +884,7 @@
     // remember which beds bloomed this night (not died) so render can keep
     // their flowers visible until the next night or a replant
     const antes = g.beds.map(p => p && p.word);
+    const saludAntes = g.beds.map(p => p && p.health);
     const logMark = g.log.length;
     V.endDay(g);
     bloomEchoes = {};
@@ -886,7 +901,33 @@
     Object.keys(bloomEchoes).forEach(i => soltarFlor(+i));
     // a loss is the night's cost: the cold closes in where a word went dark
     Object.keys(witherEchoes).forEach(i => soltarEscarcha(+i));
+    // a wound you can count: what the night took from each surviving word
+    // drifts over its bed — ice-blue when the frost bit, dry amber when
+    // thirst did (the log names the cause; the bed keeps the number)
+    const lineasNoche = g.log.slice(logMark);
+    antes.forEach((w, i) => {
+      const p = g.beds[i];
+      if (!w || !p || p.word !== w) return;
+      const delta = saludAntes[i] - p.health;
+      if (delta <= 0) return;
+      const mio = lineasNoche.filter(l => l.includes('«' + w + '»'));
+      const helada = mio.some(l => l.includes('frost hit'));
+      soltarMerma(i, delta, helada);
+    });
   };
+
+  // the toll you can see: "−2" lifts off the bed the night just wounded
+  function soltarMerma(i, delta, helada) {
+    if (g.over) return; // the thaw screen is its own reveal
+    const bed = camasEl.children[i];
+    if (!bed) return;
+    const m = document.createElement('div');
+    m.className = 'merma ' + (helada ? 'merma-helada' : 'merma-seca');
+    m.textContent = '−' + delta;
+    m.setAttribute('aria-hidden', 'true');
+    bed.append(m);
+    m.addEventListener('animationend', () => m.remove());
+  }
 
   // wither you can see: the cold tightens on the bed that lost its word
   function soltarEscarcha(i) {
