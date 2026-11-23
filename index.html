@@ -607,7 +607,8 @@
       // who pays for going without tonight (the engine counts age at dusk)
       const sedNoche = !!p && p.water === 0 && p.traits.thirst > 0 && p.age >= 1;
       // the other side of the night: a watered word that this night's growth will carry to bloom
-      const florNoche = !!p && p.water > 0 && p.stage < 4 && (function () {
+      // the frost strikes before the dawn bloom: a word it would kill tonight does not bloom
+      const florNoche = !!p && p.water > 0 && p.stage < 4 && !(mordidaNoche > 0 && mordidaNoche >= p.health) && (function () {
         const th = V.themeOf(p.word, g);
         return p.progress + 1 + (p.lit && th !== 'night' ? 1 : 0) + (p.lit && th === 'flame' ? 1 : 0) >= V.stageCost(p.traits) * 4;
       })();
