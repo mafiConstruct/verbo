@@ -256,6 +256,7 @@
       actions <b id="acciones-restantes">●●●</b> ·
       tonight: <b id="pronostico"></b> ·
       tomorrow: <b id="manana"></b> ·
+      <span id="adelante-caja" hidden>scouted: <b id="adelante"></b> ·</span>
       seed <b id="codigo"></b>
     </span>
   </header>
@@ -280,6 +281,7 @@
           <button data-modo="luz">give light</button>
           <button data-modo="abrigar">shelter</button>
           <button data-modo="injertar">graft (2)</button>
+          <button id="explorar" type="button">scout the sky (1)</button>
           <button id="noche">end the night →</button>
         </div>
       </div>
@@ -303,7 +305,7 @@
     <div id="muestra-inicio" aria-hidden="true"></div>
     <div class="como">
       <p><b>1.</b> Click a glowing garden bed to plant the selected word — or pick another in your pouch first.</p>
-      <p><b>2.</b> Water what you want to grow; a lamp speeds a whole row for one night, and fire words feed on it. When frost is forecast, shelter your words — night words don't mind it, and wet words freeze harder. The sky shows tonight and tomorrow: a word still wet when tomorrow's frost comes freezes harder too.</p>
+      <p><b>2.</b> Water what you want to grow; a lamp speeds a whole row for one night, and fire words feed on it. When frost is forecast, shelter your words — night words don't mind it, and wet words freeze harder. The sky shows tonight and tomorrow: a word still wet when tomorrow's frost comes freezes harder too. Once a night you can spend an action to scout the three nights beyond tomorrow: it costs a tending action, and it changes nothing about the sky.</p>
       <p><b>3.</b> After 14 nights, every word that bloomed becomes your poem.</p>
     </div>
     <div class="fila">
@@ -787,6 +789,11 @@
       }
     });
     $('noche').disabled = g.over;
+    const ex = $('explorar');
+    ex.disabled = !V.canScout(g);
+    const ad = $('adelante-caja');
+    ad.hidden = !(g.scoutedDay === g.day && !g.over);
+    if (!ad.hidden) $('adelante').textContent = V.skyAhead(g).map(x => 'n' + x.night + ' ' + (x.frost > 0 ? 'frost ' + x.frost : 'clear')).join(' · ');
     // the hoard: a row of flowers earned, each on its family stem — the payoff accumulates visibly
     const cajaTesoro = $('caja-tesoro');
     if (g.poem.length) {
@@ -1148,6 +1155,7 @@
       modo = b.dataset.modo; injertoSel = []; render();
     };
   });
+  $('explorar').onclick = () => { if (V.scout(g)) render(); };
   $('noche').onclick = () => {
     if (g.over) return;
     // remember which beds bloomed this night (not died) so render can keep
