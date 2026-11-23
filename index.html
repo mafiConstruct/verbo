@@ -770,7 +770,7 @@
         ' · thirst ' + bsed + ' · resists frost ' + bt.hardiness +
         ' · blooms in ~' + brem + ' watered nights (' + blit + ' with light every night)' +
         (blit > V.DAYS - g.day + 1 ? ' · <b>too late: it would not bloom before the thaw</b>' : '') +
-        ' · <b>vigorous</b> · child of «' + pa2 + '» and «' + pb2 + '»';
+        ' · <b>vigorous</b> · child of «' + pa2 + '» and «' + pb2 + '» · <b>each bloom adds 3 hoard value, instead of 1</b>';
     }
     // A removed plant must never leave a ghost description behind.
     else if (inspectedPlant && g.beds.includes(inspectedPlant)) pista(inspectedPlant.word, inspectedPlant);
@@ -918,7 +918,7 @@
       msg = 'shelter armed — click each glowing word; the frost would hurt it tonight.';
     } else if (modo === 'injertar' && injertoSel.length === 2 && g.beds[injertoSel[0]] && g.beds[injertoSel[1]]) {
       const ga = g.beds[injertoSel[0]].word, gb = g.beds[injertoSel[1]].word, gc = V.blend(ga, gb);
-      msg = '«' + ga + '» + «' + gb + '» = «' + gc + '» — both parents go, their beds free up, and «' + gc + '» joins the pouch vigorous. press graft again to confirm; click a chosen word to let it go.';
+      msg = '«' + ga + '» + «' + gb + '» = «' + gc + '» — both parents go, their beds free up, and «' + gc + '» joins the pouch vigorous. Each bloom of it adds 3 hoard value, instead of 1. It must be planted and tended first. press graft again to confirm; click a chosen word to let it go.';
     } else if (modo === 'injertar' && injertoSel.length === 1 && g.beds[injertoSel[0]]) {
       msg = '«' + g.beds[injertoSel[0]].word + '» selected — click a second glowing word; they merge into a word that never existed.';
     } else if (modo === 'injertar' && plants.length) {
