@@ -365,7 +365,13 @@
         add('path', { d: 'M60 27 L52 22 M60 27 L68 22', stroke: 'currentColor', 'stroke-width': 2 });
       }
     }
-    if (p.water) for (let n = 0; n < Math.min(3, p.water); n++) add('path', { d: 'M' + (14 + n * 10) + ' 71 q-5 7 0 8 q5-1 0-8', fill: '#8ac6d1' });
+    // the gamble made visible: a wet word the frost will bite unsheltered shows frozen droplets
+    const gotaHelada = p.water && frostThreat && !p.sheltered;
+    if (p.water) for (let n = 0; n < Math.min(3, p.water); n++) {
+      const x = 14 + n * 10;
+      add('path', { d: 'M' + x + ' 71 q-5 7 0 8 q5-1 0-8', fill: gotaHelada ? '#cfe8f2' : '#8ac6d1', stroke: gotaHelada ? '#9fd4e0' : 'none', 'stroke-width': gotaHelada ? 1 : 0, class: gotaHelada ? 'gota-helada' : '' });
+      if (gotaHelada) add('path', { d: 'M' + x + ' 66 V63 M' + (x - 2) + ' 64.5 H' + (x + 2), stroke: '#9fd4e0', 'stroke-width': 1, 'stroke-linecap': 'round', class: 'gota-helada' });
+    }
     if (p.lit) {
       add('circle', { cx: 99, cy: 16, r: 7, fill: '#e8c872' });
       add('path', { d: 'M99 3 V6 M99 26 V29 M86 16 H89 M109 16 H112', stroke: '#e8c872', 'stroke-width': 1.5 });
@@ -499,7 +505,7 @@
       d.type = 'button'; d.dataset.focusKey = 'bed:' + i;
       const amenazaHelada = !!p && g.forecast > 0 && V.frostDamage(g, p) > 0;
       const mordida = !!p && !!g.scarred[p.word];
-      d.setAttribute('aria-label', 'bed ' + (i + 1) + (p ? ', ' + p.word + ', ' + V.STAGES[Math.min(p.stage, 3)] + ', health ' + p.health + ', water ' + p.water + (p.lit ? ', lit' : ', unlit') + (p.sheltered ? ', sheltered' : ', unsheltered') + (mordida ? ', frost-bitten' : '') + (p && amenazaHelada ? (p.sheltered ? ', frost held off by the shelter' : ', frost threatens it tonight') : '') : bloomEchoes[i] ? ', empty — «' + bloomEchoes[i] + '» bloomed here and is safe in the hoard' : witherEchoes[i] ? ', empty — «' + witherEchoes[i] + '» went dark here this night' : graftEchoes[i] ? ', empty — «' + graftEchoes[i].a + '» and «' + graftEchoes[i].b + '» intertwined here into «' + graftEchoes[i].w + '»' : ', empty'));
+      d.setAttribute('aria-label', 'bed ' + (i + 1) + (p ? ', ' + p.word + ', ' + V.STAGES[Math.min(p.stage, 3)] + ', health ' + p.health + ', water ' + p.water + (p.lit ? ', lit' : ', unlit') + (p.sheltered ? ', sheltered' : ', unsheltered') + (mordida ? ', frost-bitten' : '') + (p && amenazaHelada ? (p.sheltered ? ', frost held off by the shelter' : ', frost threatens it tonight' + (p.water > 0 ? ' and the water on it is freezing' : '')) : '') : bloomEchoes[i] ? ', empty — «' + bloomEchoes[i] + '» bloomed here and is safe in the hoard' : witherEchoes[i] ? ', empty — «' + witherEchoes[i] + '» went dark here this night' : graftEchoes[i] ? ', empty — «' + graftEchoes[i].a + '» and «' + graftEchoes[i].b + '» intertwined here into «' + graftEchoes[i].w + '»' : ', empty'));
       d.className = 'cama' + (injertoSel.includes(i) ? ' seleccionada' : '') + (esObjetivo(p) ? ' objetivo' : '');
       if (p) {
         const pre = plantPicture(p, amenazaHelada, mordida);
