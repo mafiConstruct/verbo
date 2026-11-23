@@ -1199,3 +1199,31 @@ test('a bed status line has readable contrast (not the dim UI green)', async ({ 
   await bed.click();
   await expect(bed.locator('.estado')).toHaveCSS('color', 'rgb(134, 181, 138)');
 });
+
+test('each seed in the pouch shows its nights to bloom, thirst and frost shield without a click', async ({ page }) => {
+  await begin(page, 'ash'); // a real start, not a fixture
+  const seeds = page.locator('#semillas > .semilla');
+  const n = await seeds.count();
+  expect(n).toBeGreaterThan(2);
+  for (let i = 0; i < n; i++) {
+    const s = seeds.nth(i);
+    const word = (await s.textContent()).trim();
+    const marks = await s.getAttribute('data-rasgos');
+    expect(marks).toMatch(/^\d+n \u00b7 thirst [0-2] \u00b7 frost [0-3]$/);
+    // name plus state: the accessible name starts with the word and says the same things the marks do
+    const label = await s.getAttribute('aria-label');
+    expect(label.startsWith(word + ', blooms in about ' + marks.match(/^\d+/)[0] + ' watered nights')).toBe(true);
+    // the marks are really painted, in a readable colour
+    const after = await s.evaluate(el => { const c = getComputedStyle(el, '::after'); return [c.content, c.color]; });
+    expect(after[0]).toContain(marks);
+    const chosen = /elegida/.test(await s.getAttribute('class'));
+    expect(after[1]).toBe(chosen ? 'rgb(215, 255, 210)' : 'rgb(134, 181, 138)');
+  }
+  // the legend names the three marks
+  await expect(page.locator('#bolsa h3')).toContainText('frost shield');
+  // the marks agree with the card shown when the seed is selected
+  const first = seeds.first();
+  const nights = (await first.getAttribute('data-rasgos')).match(/^\d+/)[0];
+  await first.click();
+  await expect(page.locator('#pista')).toContainText('blooms in ~' + nights + ' watered nights');
+});
