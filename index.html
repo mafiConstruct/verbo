@@ -644,8 +644,9 @@
             return ', watering it would also dampen «' + nombres.join('», «') + '»' + (amen.length ? ' — wet, the frost would bite harder tonight' : '');
           })()
         : '';
+      const fueraDeTiempo = !!p && bloomEstimate(p.word, p).lit > V.DAYS - g.day + 1;
       const mordida = !!p && !!p.scarred;
-      d.setAttribute('aria-label', 'bed ' + (i + 1) + (p ? ', ' + p.word + ', ' + V.STAGES[Math.min(p.stage, 3)] + ', health ' + p.health + ', water ' + p.water + (p.lit ? ', lit' : ', unlit') + (p.sheltered ? ', sheltered' : ', unsheltered') + (mordida ? ', frost-bitten' : '') + (p && amenazaHelada ? (p.sheltered ? ', frost held off by the shelter' : (mordidaNoche >= p.health ? ', the frost tonight would kill it (−' + mordidaNoche + ')' : ', frost threatens it tonight (−' + mordidaNoche + ')') + (p.water > 0 ? ' and the water on it is freezing' : '')) : '') + (sedNoche ? ', will go thirsty tonight' : '') + (florNoche ? ', will bloom tonight' : '') + luzInfo + riegoInfo + (injertoSel.includes(i) ? ', chosen for the graft' : '') : bloomEchoes[i] ? ', empty — «' + bloomEchoes[i] + '» bloomed here and is safe in the hoard' : witherEchoes[i] ? ', empty — «' + witherEchoes[i] + '» went dark here this night' + (camaCongelada(i) ? '; the bed lies frozen — it thaws ' + (g.frozenBeds[i] === g.day ? 'tomorrow night' : 'the night after') : '') : !bloomEchoes[i] && camaCongelada(i) ? ', empty — the bed lies frozen from the frost; it thaws ' + (g.frozenBeds[i] === g.day ? 'tomorrow night' : 'the night after') : graftEchoes[i] ? ', empty — «' + graftEchoes[i].a + '» and «' + graftEchoes[i].b + '» intertwined here into «' + graftEchoes[i].w + '»' : ', empty'));
+      d.setAttribute('aria-label', 'bed ' + (i + 1) + (p ? ', ' + p.word + ', ' + V.STAGES[Math.min(p.stage, 3)] + ', health ' + p.health + ', water ' + p.water + (p.lit ? ', lit' : ', unlit') + (p.sheltered ? ', sheltered' : ', unsheltered') + (mordida ? ', frost-bitten' : '') + (p && amenazaHelada ? (p.sheltered ? ', frost held off by the shelter' : (mordidaNoche >= p.health ? ', the frost tonight would kill it (−' + mordidaNoche + ')' : ', frost threatens it tonight (−' + mordidaNoche + ')') + (p.water > 0 ? ' and the water on it is freezing' : '')) : '') + (sedNoche ? ', will go thirsty tonight' : '') + (florNoche ? ', will bloom tonight' : '') + (fueraDeTiempo ? ', too late to bloom before the thaw' : '') + luzInfo + riegoInfo + (injertoSel.includes(i) ? ', chosen for the graft' : '') : bloomEchoes[i] ? ', empty — «' + bloomEchoes[i] + '» bloomed here and is safe in the hoard' : witherEchoes[i] ? ', empty — «' + witherEchoes[i] + '» went dark here this night' + (camaCongelada(i) ? '; the bed lies frozen — it thaws ' + (g.frozenBeds[i] === g.day ? 'tomorrow night' : 'the night after') : '') : !bloomEchoes[i] && camaCongelada(i) ? ', empty — the bed lies frozen from the frost; it thaws ' + (g.frozenBeds[i] === g.day ? 'tomorrow night' : 'the night after') : graftEchoes[i] ? ', empty — «' + graftEchoes[i].a + '» and «' + graftEchoes[i].b + '» intertwined here into «' + graftEchoes[i].w + '»' : ', empty'));
       d.className = 'cama' + (injertoSel.includes(i) ? ' seleccionada' : '') + (esObjetivo(p, i) ? ' objetivo' : '') + (!p && camaCongelada(i) ? ' congelada' : '');
       if (p) {
         const pre = plantPicture(p, amenazaHelada, mordida, V.plantTheme(p, g));
@@ -673,6 +674,7 @@
         if (p.lit) marcas.push('◉');
         if (p.sheltered) marcas.push('sheltered');
         if (florNoche) marcas.push('✿ blooms tonight');
+        if (fueraDeTiempo) marcas.push('too late to bloom');
         st.textContent = marcas.join(' · ');
         const av = document.createElement('div');
         av.className = 'aviso-helada' + (mordidaNoche > 0 && mordidaNoche >= p.health ? ' mortal' : '');
@@ -993,9 +995,14 @@
     } else if (modo === 'plantar' && g.pouch.length && g.beds.some(b => !b) && !g.beds.some((b, idx) => !b && !camaCongelada(idx))) {
       msg = 'the open beds lie frozen from the frost — they thaw in a night or two. tend what grows, or end the night →';
     } else if (unwatered.length) {
-      msg = 'press water, then click «' + unwatered[0].word + '» — a word only grows on watered nights' +
-        (V.plantTheme(unwatered[0], g) === 'night' ? '; this night word does not need a lamp.' : ' (light makes it faster).') +
-        (g.forecast > 0 ? ' Careful: wet words freeze harder tonight (+1 bite) — shelter it after, or leave it dry.' : '');
+      const canGrowInTime = unwatered.filter(p => bloomEstimate(p.word, p).lit <= V.DAYS - g.day + 1);
+      if (!canGrowInTime.length) msg = 'the dry words cannot bloom before the thaw, even with water and light. Water keeps them alive; it will not add a bloom. Tend them or end the night →';
+      else {
+        const p = canGrowInTime[0];
+        msg = 'press water, then click «' + p.word + '» — a word only grows on watered nights' +
+          (V.plantTheme(p, g) === 'night' ? '; this night word does not need a lamp.' : ' (light makes it faster).') +
+          (g.forecast > 0 ? ' Careful: wet words freeze harder tonight (+1 bite) — shelter it after, or leave it dry.' : '');
+      }
     } else if (modo === 'plantar' && !g.pouch.length) {
       msg = g.day === V.DAYS ? 'the pouch is empty. tend what grows or end the night →'
         : 'the pouch is empty — the wind brings new words; tend what grows or end the night →';
