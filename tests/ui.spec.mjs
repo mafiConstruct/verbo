@@ -673,3 +673,13 @@ test('the title screen shows a word growing before any rules', async ({ page }) 
   // the third is in bloom: the amber petal is open
   await expect(muestra.nth(2).locator('svg.planta path[fill="#e8c872"]')).toHaveCount(1);
 });
+
+test('on a frost night the coach names the watering gamble', async ({ page }) => {
+  await begin(page, 'seed-2xk5l0'); // night 1: frost force 1
+  await page.locator('#camas > .cama').first().click(); // plant lantern
+  await expect(page.locator('#guia')).toContainText('wets it for the frost');
+  // a wet word warns harder in its bed label than a dry one would
+  await page.click('[data-modo="regar"]');
+  await page.locator('#camas > .cama').first().click();
+  await expect(page.locator('#camas > .cama').first()).toHaveAttribute('aria-label', /frost threatens it tonight/);
+});
