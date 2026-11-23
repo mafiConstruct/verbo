@@ -1144,6 +1144,10 @@ test('a graft shows its child and its cost before committing, and lets you recon
   // the trade is on the table, nothing committed yet
   await expect(page.locator('#guia')).toContainText('«' + A + '» + «' + B + '» = «' + blend(A, B) + '»');
   await expect(page.locator('#guia')).toContainText('both parents go');
+  await expect(page.locator('#guia')).toContainText('Each bloom of it adds 3 hoard value, instead of 1');
+  await expect(page.locator('#guia')).toContainText('It must be planted and tended first');
+  await expect(page.locator('#pista')).toContainText('each bloom adds 3 hoard value, instead of 1');
+  await page.screenshot({path:'/downloads/wh-graft-reward-preview.png'});
   await expect(page.locator('#guia')).toContainText('press graft again to confirm');
   await expect(page.locator('#pista')).toContainText('would be born: «' + blend(A, B) + '»');
   await expect(page.locator('#pista')).toContainText('vigorous');
