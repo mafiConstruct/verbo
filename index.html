@@ -35,6 +35,7 @@
   #luna svg { width: 15px; height: 15px; vertical-align: -2px; margin-right: 3px; }
   .pronostico-frio { color: var(--water); }
   .pronostico-calma { color: var(--dim); }
+  .pronostico-deshielo { color: var(--amber); }
 
   main { display: flex; gap: 12px; }
   #camas { flex: 1.5; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
@@ -238,6 +239,7 @@
       <span id="luna"></span><span id="dia-label">day</span> <b id="dia">1</b><span id="dia-max"> / 14</span> ·
       actions <b id="acciones-restantes">●●●</b> ·
       tonight: <b id="pronostico"></b> ·
+      tomorrow: <b id="manana"></b> ·
       seed <b id="codigo"></b>
     </span>
   </header>
@@ -285,7 +287,7 @@
     <div id="muestra-inicio" aria-hidden="true"></div>
     <div class="como">
       <p><b>1.</b> Click a glowing garden bed to plant the selected word — or pick another in your pouch first.</p>
-      <p><b>2.</b> Water what you want to grow; a lamp speeds a whole row for one night, and fire words feed on it. When frost is forecast, shelter your words — night words don't mind it, and wet words freeze harder.</p>
+      <p><b>2.</b> Water what you want to grow; a lamp speeds a whole row for one night, and fire words feed on it. When frost is forecast, shelter your words — night words don't mind it, and wet words freeze harder. The sky shows tonight and tomorrow: a word still wet when tomorrow's frost comes freezes harder too.</p>
       <p><b>3.</b> After 14 nights, every word that bloomed becomes your poem.</p>
     </div>
     <div class="fila">
@@ -513,6 +515,13 @@
     const pr = $('pronostico');
     if (g.forecast > 0) { pr.textContent = 'frost, force ' + g.forecast; pr.className = 'pronostico-frio'; }
     else { pr.textContent = 'calm night'; pr.className = 'pronostico-calma'; }
+    const mn = $('manana');
+    if (g.over || g.day >= V.DAYS) { mn.textContent = 'the thaw'; mn.className = 'pronostico-deshielo'; }
+    else {
+      const fM = g.sky ? g.sky[g.day] : 0;
+      if (fM > 0) { mn.textContent = 'frost, force ' + fM; mn.className = 'pronostico-frio'; }
+      else { mn.textContent = 'clear'; mn.className = 'pronostico-calma'; }
+    }
     camasEl.classList.toggle('helada', g.forecast > 0);
     camasEl.classList.toggle('helada-fuerte', g.forecast >= 2);
 
@@ -766,10 +775,23 @@
     } else {
       msg = 'everything is tended — end the night →';
     }
+    // "nothing left to tend" is decided before tomorrow's warning is attached:
+    // the warning asks nothing of tonight, so the night button still glows
+    const nadaMasQueHacer = msg.endsWith('end the night →') || msg.startsWith('the pouch is empty');
+    // planning horizon: tomorrow's frost meets water that outlasts tonight
+    const fManana = g.sky && !g.over && g.day < V.DAYS ? g.sky[g.day] : 0;
+    if (fManana > 0) {
+      const mojada = plants.find(p => {
+        if (p.water < 2) return false; // one night of growth drinks one: only a topped-up word stays wet
+        const mod = V.themeOf(p.word, g) === 'night' ? -1 : V.themeOf(p.word, g) === 'flame' ? 1 : 0;
+        return Math.max(0, fManana - p.traits.hardiness) + mod + 1 > 0;
+      });
+      if (mojada) msg += ' Tomorrow brings frost (force ' + fManana + '): «' + mojada.word + '» would still be wet at dusk — wet words freeze harder.';
+    }
     $('guia').textContent = msg;
     // every piece of advice that ends in "end the night" means nothing is
     // left to tend: light the button that moves the game forward
-    $('noche').classList.toggle('listo', msg.endsWith('end the night →') || msg.startsWith('the pouch is empty'));
+    $('noche').classList.toggle('listo', nadaMasQueHacer);
   }
 
   const THEME_BLURB = {
