@@ -656,6 +656,45 @@ test('a dry word says the light pays only if watered too (fixture)', async ({ pa
   await expect(page.locator('#guia')).toContainText('water them and the light pays off');
 });
 
+test('watering next to a frost-threatened word warns that the damp deepens its bite (real seed)', async ({ page }) => {
+  await begin(page, 'seed-2xk5l0'); // night 1: frost force 1; pouch starts with lantern, crow
+  const beds = page.locator('#camas > .cama');
+  await beds.nth(0).click(); // plant lantern in bed 1
+  await beds.nth(1).click(); // plant crow in bed 2
+  await expect(beds.nth(0)).toHaveAttribute('aria-label', /frost threatens it tonight \(−2\)/);
+  await page.click('button[data-modo="regar"]');
+  // the hidden cost is named before the click, in coach and aria
+  await expect(page.locator('#guia')).toContainText('the damp would also reach');
+  await expect(page.locator('#guia')).toContainText('«lantern»');
+  await expect(page.locator('#guia')).toContainText('wet, it would freeze harder tonight');
+  await expect(beds.nth(1)).toHaveAttribute('aria-label', /watering it would also dampen «lantern» — wet, the frost would bite harder tonight/);
+  await beds.nth(1).click(); // commit: crow drinks, lantern catches the splash
+  await expect(page.locator('#guia')).toContainText('the damp reaches «lantern» — wet now, the frost bites harder tonight.');
+  await expect(beds.nth(0)).toHaveAttribute('aria-label', /frost threatens it tonight \(−3\)/);
+});
+
+test('watering between words shares the damp with both neighbors (fixture)', async ({ page }) => {
+  // declared fixture: three dry words in one row, calm night
+  await page.goto('/index.html');
+  await page.evaluate(() => {
+    const original = VERBO.newGame;
+    VERBO.newGame = code => {
+      const s = original('seed-2xk5l0');
+      s.forecast = 0; s.pouch = ['crow'];
+      VERBO.plantAt(s, 0, 'moss'); VERBO.plantAt(s, 1, 'crow'); VERBO.plantAt(s, 2, 'bark');
+      s.actions = 3;
+      return s;
+    };
+  });
+  await page.click('#comenzar');
+  await page.click('button[data-modo="regar"]');
+  const beds = page.locator('#camas > .cama');
+  await expect(page.locator('#guia')).toContainText('Its row neighbors catch a sip of the damp for free.');
+  await expect(beds.nth(1)).toHaveAttribute('aria-label', /watering it would also dampen «moss», «bark»/);
+  await beds.nth(1).click();
+  await expect(page.locator('#guia')).toContainText('the damp reaches «moss», «bark».');
+});
+
 test('a word the frost takes is closed in by the cold at dawn', async ({ page }) => {
   await begin(page, 'seed-2xk5l0');
   const bed = page.locator('#camas > .cama').first();
