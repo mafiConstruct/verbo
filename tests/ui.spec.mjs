@@ -1150,7 +1150,14 @@ test('a graft shows its child and its cost before committing, and lets you recon
   await expect(page.locator('#guia')).toContainText('Each bloom of it adds 3 hoard value, instead of 1');
   await expect(page.locator('#guia')).toContainText('It must be planted and tended first');
   await expect(page.locator('#pista')).toContainText('each bloom adds 3 hoard value, instead of 1');
-  await page.screenshot({path:'/downloads/wh-graft-reward-preview.png'});
+  await expect(page.locator('.graft-choices')).toContainText('KEEP THE PARENTS');
+  await expect(page.locator('.graft-choices')).toContainText('Costs 2 actions, then 1 to plant');
+  await expect(page.locator('.graft-choices meter')).toHaveCount(3);
+  await page.screenshot({path:'/downloads/wh-graft-comparison-desktop.png'});
+  await page.setViewportSize({width:390,height:844});
+  await page.locator('.graft-choices').scrollIntoViewIfNeeded();
+  await page.screenshot({path:'/downloads/wh-graft-comparison-mobile.png'});
+  await page.setViewportSize({width:1280,height:720});
   await expect(page.locator('#guia')).toContainText('press graft again to confirm');
   await expect(page.locator('#pista')).toContainText('would be born: «' + blend(A, B) + '»');
   await expect(page.locator('#pista')).toContainText('vigorous');
