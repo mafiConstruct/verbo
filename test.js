@@ -237,16 +237,31 @@ ok(endings['Silence'] === undefined || endings['Silence'] <= 10, 'silence is rar
 {
   // hoard value: a bloomed born word counts triple, a plain one counts once
   const g = V.newGame('hoard-a');
-  g.poem = ['ember', 'ivy', 'owl']; g.vigorous = {}; V.finish(g);
+  g.poem = ['ember', 'ivy', 'owl']; g.bloomRecords = g.poem.map(word=>({word,grafted:false})); g.vigorous = {}; V.finish(g);
   ok(g.ending.value === 3 && g.ending.born === 0, 'plain blooms count once');
   const h = V.newGame('hoard-b');
-  h.poem = ['ember', 'ivy', 'owl']; h.vigorous = { ivy: true }; V.finish(h);
+  h.poem = ['ember', 'ivy', 'owl']; h.vigorous = { ivy: true }; h.bloomRecords=h.poem.map(word=>({word,grafted:word==='ivy'})); V.finish(h);
   ok(h.ending.born === 1 && h.ending.value === 5 && h.ending.bloomed === 0, 'one born bloom is worth three');
   const k = V.newGame('hoard-c');
-  k.poem = ['ember', 'ivy', 'owl', 'elm']; k.vigorous = { ivy: true, owl: true }; V.finish(k);
+  k.poem = ['ember', 'ivy', 'owl', 'elm']; k.vigorous = { ivy: true, owl: true }; k.bloomRecords=k.poem.map(word=>({word,grafted:word==='ivy'||word==='owl'})); V.finish(k);
   ok(k.ending.value === 8 && k.ending.title === 'Just enough', 'born blooms lift the title: 4 words, 2 born = 8 = Just enough');
   const z = V.newGame('hoard-d'); z.poem = []; V.finish(z);
   ok(z.ending.value === 0 && z.ending.title === 'Silence', 'no blooms, no value');
+}
+{
+  const g=V.newGame('salt-collision');
+  g.pouch=['salt','sap','silt'];
+  V.plantAt(g,0,'salt'); g.beds[0].stage=4;g.beds[0].health=20;g.forecast=0;V.endDay(g);
+  ok(g.bloomRecords[0].grafted===false,'plain salt records its origin at bloom');
+  V.plantAt(g,0,'salt'); // another plain salt planted BEFORE the name is grafted
+  const oldPlant=g.beds[0];
+  V.plantAt(g,1,'sap');V.plantAt(g,2,'silt');g.beds[1].stage=2;g.beds[2].stage=2;g.actions=3;
+  ok(V.graft(g,1,2)==='salt','collision really produces existing salt');
+  V.finish(g);ok(g.ending.value===1&&g.ending.born===0,'grafting salt cannot revalue its earlier bloom');
+  g.over=false;oldPlant.stage=4;oldPlant.health=20;g.forecast=0;V.endDay(g);
+  ok(g.bloomRecords.length===2&&!g.bloomRecords[1].grafted,'plain plant retains origin after same-name graft');
+  g.over=false;V.plantAt(g,1,'salt');g.beds[1].stage=4;g.beds[1].health=20;g.forecast=0;V.endDay(g);V.finish(g);
+  ok(g.ending.value===5&&g.ending.born===1,'two earlier plain salt blooms plus new grafted salt are worth five');
 }
 console.log(fails === 0 ? 'MEMORY OK' : 'MEMORY FAILURES: ' + fails);
 console.log(fails === 0 ? 'WEATHER OK' : 'WEATHER FAILURES: ' + fails);
