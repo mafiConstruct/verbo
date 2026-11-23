@@ -121,6 +121,7 @@ test('two grown words graft into a new word in the pouch', async ({ page }) => {
   const pouchBefore = await page.locator('#semillas').textContent();
   await glow.nth(0).click();
   await glow.nth(1).click();
+  await page.click('button[data-modo="injertar"]'); // confirm the trade the preview showed
   await expect(page.locator('#registro')).toContainText('you grafted');
   await expect(page.locator('#semillas')).not.toHaveText(pouchBefore);
 });
@@ -158,6 +159,7 @@ test('a graft leaves intertwined tendrils where the parents stood', async ({ pag
   const parentB = (await glow.nth(1).getAttribute('aria-label')).match(/bed \d+, (\w+),/)[1];
   await glow.nth(0).click();
   await glow.nth(1).click();
+  await page.click('button[data-modo="injertar"]'); // confirm the trade the preview showed
   const echoes = page.locator('#camas > .cama:has(.planta.eco.injerto-echo)');
   await expect(echoes).toHaveCount(2); // both parents leave their tendrils
   await expect(echoes.nth(0)).toHaveAttribute('aria-label', new RegExp('«' + parentA + '» and «' + parentB + '» intertwined here into «\\w+»'));
@@ -991,4 +993,72 @@ test('frost and thirst warnings stack on a word that faces both', async ({ page 
   await expect(bed.locator('.aviso-sed')).toHaveText('it will go thirsty tonight (−1)');
   await expect(bed).toHaveAttribute('aria-label', /frost threatens it tonight \(−2\)/);
   await expect(bed).toHaveAttribute('aria-label', /will go thirsty tonight/);
+});
+
+test('a graft shows its child and its cost before committing, and lets you reconsider', async ({ page }) => {
+  test.setTimeout(60000);
+  await begin(page, 'seed-graft8'); // same engine-verified setup as the other graft tests
+  const actionsLeft = async () => !(await page.locator('#acciones-restantes').textContent()).startsWith('○');
+  const arm = async modo => {
+    const btn = page.locator('button[data-modo="' + modo + '"]');
+    if ((await btn.getAttribute('aria-pressed')) !== 'true') await btn.click();
+  };
+  for (let night = 0; night < 14; night++) {
+    const graftable = await page.locator('#camas > .cama').evaluateAll(
+      els => els.filter(el => /, (stem|bud),/.test(el.getAttribute('aria-label') || '')).length
+    );
+    if (graftable >= 2) break;
+    for (const bed of await page.locator('#camas > .cama:has(.planta:not(.eco))').all()) {
+      if (!(await actionsLeft())) break;
+      if (/frost threatens/.test(await bed.getAttribute('aria-label') || '')) {
+        await arm('abrigar');
+        await bed.click();
+      }
+    }
+    while ((await page.locator('#camas > .cama:has(.planta:not(.eco))').count()) < 2 && (await actionsLeft())) {
+      const empty = page.locator('#camas > .cama:not(:has(.planta:not(.eco))):not(.congelada)');
+      if ((await empty.count()) === 0 || (await page.locator('#semillas > .semilla').count()) === 0) break;
+      await arm('plantar');
+      await empty.first().click();
+    }
+    for (const bed of await page.locator('#camas > .cama:has(.planta:not(.eco))').all()) {
+      if (!(await actionsLeft())) break;
+      const aria = (await bed.getAttribute('aria-label')) || '';
+      if (/frost threatens|frost held off/.test(aria)) continue;
+      if (!/≈/.test(await bed.locator('.estado').textContent())) {
+        await arm('regar');
+        await bed.click();
+      }
+    }
+    await page.click('#noche');
+  }
+  const blend = (a, b) => a.slice(0, Math.ceil(a.length / 2)) + b.slice(Math.floor(b.length / 2));
+  await page.click('button[data-modo="injertar"]');
+  const glow = page.locator('#camas > .cama.objetivo');
+  await expect(glow).toHaveCount(2);
+  const wordAt = async loc => ((await loc.getAttribute('aria-label')) || '').match(/bed \d+, (\w+),/)[1];
+  const A = await wordAt(glow.nth(0)), B = await wordAt(glow.nth(1));
+  const accionesAntes = await page.locator('#acciones-restantes').textContent();
+  await glow.nth(0).click();
+  await glow.nth(1).click();
+  // the trade is on the table, nothing committed yet
+  await expect(page.locator('#guia')).toContainText('«' + A + '» + «' + B + '» = «' + blend(A, B) + '»');
+  await expect(page.locator('#guia')).toContainText('both parents go');
+  await expect(page.locator('#guia')).toContainText('press graft again to confirm');
+  await expect(page.locator('#pista')).toContainText('would be born: «' + blend(A, B) + '»');
+  await expect(page.locator('#pista')).toContainText('vigorous');
+  await expect(page.locator('button[data-modo="injertar"]')).toHaveText('graft «' + blend(A, B) + '» (2) →');
+  await expect(page.locator('#registro')).not.toContainText('you grafted');
+  await expect(page.locator('#acciones-restantes')).toHaveText(accionesAntes);
+  await expect(glow.nth(0)).toHaveAttribute('aria-label', /chosen for the graft/);
+  // letting the first word go drops the preview
+  await glow.nth(0).click();
+  await expect(page.locator('#guia')).toContainText('click a second glowing word');
+  await expect(page.locator('button[data-modo="injertar"]')).toHaveText('graft (2)');
+  // re-picking the same word makes it the SECOND pick: the preview names the pair in order
+  await glow.nth(0).click();
+  await expect(page.locator('#guia')).toContainText('«' + B + '» + «' + A + '» = «' + blend(B, A) + '»');
+  // and confirming grafts exactly the pair shown
+  await page.click('button[data-modo="injertar"]');
+  await expect(page.locator('#registro')).toContainText('you grafted «' + B + '» with «' + A + '»');
 });
