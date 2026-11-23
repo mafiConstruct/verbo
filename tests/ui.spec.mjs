@@ -727,3 +727,55 @@ test('a word that went thirsty shows a dry toll, not an icy one', async ({ page 
   await expect(merma).toHaveText('−1');
   await expect(merma).toHaveClass(/merma-seca/);
 });
+
+test('a word that lived through the frost keeps its mark in the hoard when it blooms', async ({ page }) => {
+  await begin(page, 'seed-2xk5l0'); // lantern: frost-bitten night 1, blooms at dawn of night 8 if tended
+  const bed = page.locator('#camas > .cama').first();
+  await bed.click(); // plant lantern
+  for (let n = 1; n <= 8; n++) {
+    await page.click('[data-modo="regar"]');
+    await bed.click(); // water
+    const frost = await page.locator('#pronostico').textContent();
+    if (/frost/.test(frost) && n > 1) { // night 1 it takes the bite that marks it
+      await page.click('[data-modo="abrigar"]');
+      await bed.click(); // shelter holds the frost off
+    }
+    await page.click('#noche');
+  }
+  const chip = page.locator('#tesoro .tesoro-flor.marcada');
+  await expect(chip).toHaveCount(1);
+  await expect(chip.locator('b')).toHaveText('«lantern»');
+  await expect(page.locator('#tesoro')).toHaveAttribute('aria-label', /frost-marked/);
+});
+
+test('a bloomed word that never met the frost carries no mark', async ({ page }) => {
+  await begin(page, 'seed-2xk5l0'); // crow: unplanted nights 1-8, planted night 9, no scars
+  const bed = page.locator('#camas > .cama').first();
+  await bed.click(); // plant lantern
+  for (let n = 1; n <= 8; n++) {
+    await page.click('[data-modo="regar"]');
+    await bed.click();
+    const frost = await page.locator('#pronostico').textContent();
+    if (/frost/.test(frost) && n > 1) {
+      await page.click('[data-modo="abrigar"]');
+      await bed.click();
+    }
+    await page.click('#noche');
+  }
+  // lantern bloomed frost-marked; now grow crow (pouch got lantern back, pick crow)
+  await page.locator('#semillas > .semilla', { hasText: 'crow' }).click();
+  await page.locator('#camas > .cama').nth(1).click(); // plant crow in bed 2
+  for (let n = 9; n <= 14 && !await page.locator('#tesoro .tesoro-flor', { hasText: 'crow' }).count(); n++) {
+    await page.click('[data-modo="regar"]');
+    await page.locator('#camas > .cama').nth(1).click();
+    const frost = await page.locator('#pronostico').textContent();
+    if (/frost/.test(frost)) {
+      await page.click('[data-modo="abrigar"]');
+      await page.locator('#camas > .cama').nth(1).click();
+    }
+    await page.click('#noche');
+  }
+  const crowChip = page.locator('#tesoro .tesoro-flor', { hasText: 'crow' });
+  await expect(crowChip).toHaveCount(1);
+  await expect(crowChip).not.toHaveClass(/marcada/);
+});
