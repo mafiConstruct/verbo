@@ -159,22 +159,6 @@
     state.actions--;
   }
   function shelter(state, bed) { state.beds[bed].sheltered = true; state.actions--; }
-  // scouting: one action, once a night, to read the sky beyond tomorrow.
-  // Pure information: the sky was dealt with the game and is never changed.
-  function skyAhead(state) {
-    const out = [];
-    for (let k = 1; k <= 3; k++) { const i = state.day + k; if (i < DAYS) out.push({ night: i + 1, frost: state.sky[i] }); }
-    return out;
-  }
-  function canScout(state) { return !state.over && state.actions > 0 && state.scoutedDay !== state.day && state.day < DAYS; }
-  function scout(state) {
-    if (!canScout(state)) return false;
-    state.actions--; state.scoutedDay = state.day;
-    const a = skyAhead(state);
-    say(state, 'you scouted the sky: ' + a.map(x => 'night ' + x.night + ' ' + (x.frost > 0 ? 'frost ' + x.frost : 'clear')).join(', ') + '.');
-    return true;
-  }
-
   function graft(state, bedA, bedB) {
     const A = state.beds[bedA], B = state.beds[bedB];
     if (!A || !B) return null;
@@ -408,7 +392,7 @@
   }
 
   return {
-    newGame, endDay, plantAt, water, light, shelter, graft, scout, canScout, skyAhead, finish, stageCost,
+    newGame, endDay, plantAt, water, light, shelter, graft, finish, stageCost,
     traits, blend, familyOf, themeOf, composePoem, aliveCount, frostDamage,
     LEXICON, RARE, THEME_MAP, STAGES, BEDS, DAYS, ACTIONS_PER_DAY, frostFor, dealSky,
     mulberry32, hashStr,
