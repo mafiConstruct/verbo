@@ -113,7 +113,7 @@
     const state = {
       code, rng, day: 1, actions: ACTIONS_PER_DAY,
       beds: new Array(BEDS).fill(null),
-      pouch, poem: [], grafts: 0, bloomed: 0, vigorous: {}, lost: [], bornThemes: {},
+      pouch, poem: [], bloomRecords: [], grafts: 0, bloomed: 0, vigorous: {}, lost: [], bornThemes: {},
       scarred: {}, parents: {}, frozenBeds: {},
       log: [], over: false, ending: null,
       windStock: lex.concat(RARE.filter(w => !pouch.includes(w))),
@@ -134,7 +134,7 @@
     }
     const t = traits(word);
     const vig = !!state.vigorous[word];
-    state.beds[bed] = { word, stage: 0, progress: vig ? 2 : 0, water: 0, health: vig ? 5 : 4, age: 0, dry: 0, lit: false, sheltered: false, traits: t };
+    state.beds[bed] = { word, grafted: vig, stage: 0, progress: vig ? 2 : 0, water: 0, health: vig ? 5 : 4, age: 0, dry: 0, lit: false, sheltered: false, traits: t };
     state.pouch.splice(state.pouch.indexOf(word), 1);
     state.actions--;
     say(state, 'you planted «' + word + '».');
@@ -255,6 +255,7 @@
       const p = state.beds[i];
       if (p && p.stage >= 4) {
         state.poem.push(p.word);
+        state.bloomRecords.push({word:p.word, grafted:!!p.grafted});
         state.bloomed++;
         // one bloom, one seed back: replanting a saved word is a choice,
         // not a way to fill the garden with copies of it
@@ -370,7 +371,7 @@
     const fams = new Set(state.poem.map(w => traits(w).fam)).size;
     // a born (grafted) word that blooms counts triple: grafting costs two growing
     // words and two actions, so it has to pay in the hoard, not only in the verse
-    const born = state.poem.filter(w => state.vigorous[w]).length;
+    const born = state.bloomRecords.filter(record => record.grafted).length;
     const value = state.poem.length + 2 * born;
     let title;
     if (value >= 10) title = 'The hoard sings';
