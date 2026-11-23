@@ -611,15 +611,15 @@
       // the other side of the night: a watered word that this night's growth will carry to bloom
       // the frost strikes before the dawn bloom: a word it would kill tonight does not bloom
       const florNoche = !!p && p.water > 0 && p.stage < 4 && !(mordidaNoche > 0 && mordidaNoche >= p.health) && (function () {
-        const th = V.themeOf(p.word, g);
+        const th = V.plantTheme(p, g);
         return p.progress + 1 + (p.lit && th !== 'night' ? 1 : 0) + (p.lit && th === 'flame' ? 1 : 0) >= V.stageCost(p.traits) * 4;
       })();
       // with the lamp armed, each word says what the light would buy it
       // tonight: light only pays on watered words (flame words feast), and a
       // dry word can still be watered after the lamp — the fact, not a nudge
-      const luzInfo = (modo === 'luz' && p && !p.lit && V.themeOf(p.word, g) !== 'night')
+      const luzInfo = (modo === 'luz' && p && !p.lit && V.plantTheme(p, g) !== 'night')
         ? (p.water > 0
-            ? (V.themeOf(p.word, g) === 'flame' ? ', would feed on the light tonight' : ', would grow faster under the light tonight')
+            ? (V.plantTheme(p, g) === 'flame' ? ', would feed on the light tonight' : ', would grow faster under the light tonight')
             : ', dry — the light pays only if it is watered tonight too')
         : '';
       // with water armed, a dry word says who else its watering would wet:
@@ -634,11 +634,11 @@
             return ', watering it would also dampen «' + nombres.join('», «') + '»' + (amen.length ? ' — wet, the frost would bite harder tonight' : '');
           })()
         : '';
-      const mordida = !!p && !!g.scarred[p.word];
+      const mordida = !!p && !!p.scarred;
       d.setAttribute('aria-label', 'bed ' + (i + 1) + (p ? ', ' + p.word + ', ' + V.STAGES[Math.min(p.stage, 3)] + ', health ' + p.health + ', water ' + p.water + (p.lit ? ', lit' : ', unlit') + (p.sheltered ? ', sheltered' : ', unsheltered') + (mordida ? ', frost-bitten' : '') + (p && amenazaHelada ? (p.sheltered ? ', frost held off by the shelter' : (mordidaNoche >= p.health ? ', the frost tonight would kill it (−' + mordidaNoche + ')' : ', frost threatens it tonight (−' + mordidaNoche + ')') + (p.water > 0 ? ' and the water on it is freezing' : '')) : '') + (sedNoche ? ', will go thirsty tonight' : '') + (florNoche ? ', will bloom tonight' : '') + luzInfo + riegoInfo + (injertoSel.includes(i) ? ', chosen for the graft' : '') : bloomEchoes[i] ? ', empty — «' + bloomEchoes[i] + '» bloomed here and is safe in the hoard' : witherEchoes[i] ? ', empty — «' + witherEchoes[i] + '» went dark here this night' + (camaCongelada(i) ? '; the bed lies frozen — it thaws ' + (g.frozenBeds[i] === g.day ? 'tomorrow night' : 'the night after') : '') : !bloomEchoes[i] && camaCongelada(i) ? ', empty — the bed lies frozen from the frost; it thaws ' + (g.frozenBeds[i] === g.day ? 'tomorrow night' : 'the night after') : graftEchoes[i] ? ', empty — «' + graftEchoes[i].a + '» and «' + graftEchoes[i].b + '» intertwined here into «' + graftEchoes[i].w + '»' : ', empty'));
       d.className = 'cama' + (injertoSel.includes(i) ? ' seleccionada' : '') + (esObjetivo(p, i) ? ' objetivo' : '') + (!p && camaCongelada(i) ? ' congelada' : '');
       if (p) {
-        const pre = plantPicture(p, amenazaHelada, mordida, V.themeOf(p.word, g));
+        const pre = plantPicture(p, amenazaHelada, mordida, V.plantTheme(p, g));
         d.classList.add('growing', 'fam-' + p.traits.fam);
         if (p.water) d.classList.add('watered');
         if (p.lit) d.classList.add('sunlit');
@@ -761,7 +761,7 @@
       const pa2 = g.beds[injertoSel[0]].word, pb2 = g.beds[injertoSel[1]].word;
       const born = V.blend(pa2, pb2);
       const bt = V.traits(born);
-      const btheme = V.themeOf(pa2, g);
+      const btheme = V.plantTheme(g.beds[injertoSel[0]], g);
       const bsed = bt.thirst === 0 ? 'none' : bt.thirst === 1 ? 'normal' : 'high';
       const brate = btheme === 'flame' ? 3 : btheme === 'night' ? 1 : 2;
       const brem = Math.max(1, V.stageCost(bt) * 4 - 2);
@@ -802,7 +802,7 @@
       tesoroEl.innerHTML = '';
       kept.forEach(w => {
         const chip = document.createElement('span');
-        chip.className = 'tesoro-flor fam-' + V.familyOf(w) + (g.scarred[w] ? ' marcada' : '');
+        chip.className = 'tesoro-flor fam-' + V.familyOf(w) + (g.bloomRecords.some(r => r.word === w && r.scarred) ? ' marcada' : '');
         chip.append(hoardFlower());
         const word = document.createElement('b');
         const records = g.bloomRecords.filter(x => x.word === w);
@@ -815,7 +815,7 @@
         chip.append(word, value);
         tesoroEl.append(chip);
       });
-      tesoroEl.setAttribute('aria-label', 'the hoard: ' + kept.map(w => '«' + w + '»' + (g.scarred[w] ? ' (frost-marked)' : '')).join(', ') + (g.poem.length > kept.length ? ' — ' + g.poem.length + ' blooms' : '') + ' — hoard value ' + hoardValue);
+      tesoroEl.setAttribute('aria-label', 'the hoard: ' + kept.map(w => '«' + w + '»' + (g.bloomRecords.some(r => r.word === w && r.scarred) ? ' (frost-marked)' : '')).join(', ') + (g.poem.length > kept.length ? ' — ' + g.poem.length + ' blooms' : '') + ' — hoard value ' + hoardValue);
       if (g.poem.length > kept.length) {
         const cuenta = document.createElement('span');
         cuenta.className = 'tesoro-cuenta';
@@ -852,7 +852,7 @@
 
   // Shared by the seed card and planting targets, including a graft's head start.
   function bloomEstimate(w, plant) {
-    const theme = V.themeOf(w, g);
+    const theme = plant ? V.plantTheme(plant, g) : V.themeOf(w, g);
     const rate = theme === 'flame' ? 3 : theme === 'night' ? 1 : 2;
     const progress = plant ? plant.progress : g.vigorous[w] ? 2 : 0;
     const remaining = Math.max(1, V.stageCost(V.traits(w)) * 4 - progress);
@@ -871,7 +871,7 @@
     if (modo === 'plantar') return !p && !camaCongelada(i) && g.pouch.length > 0 && !muyTarde(semillaElegida || g.pouch[0]);
     // glow means "this action would change something tonight"
     if (modo === 'regar') return !!p && p.water <= 0;
-    if (modo === 'luz') return !!p && !p.lit && V.themeOf(p.word, g) !== 'night'; // light does nothing for night words
+    if (modo === 'luz') return !!p && !p.lit && V.plantTheme(p, g) !== 'night'; // light does nothing for night words
     if (modo === 'abrigar') return !!p && !p.sheltered && V.frostDamage(g, p) > 0;
     if (modo === 'injertar') return !!p && p.stage >= 2;
     return false;
@@ -885,7 +885,7 @@
     // shelter advice names only the words the frost would actually hurt
     const needsShelter = plants.filter(p => !p.sheltered && V.frostDamage(g, p) > 0);
     // light only feeds non-night words; lighting a night word is a wasted action
-    const lightable = plants.filter(p => !p.lit && V.themeOf(p.word, g) !== 'night');
+    const lightable = plants.filter(p => !p.lit && V.plantTheme(p, g) !== 'night');
     let msg;
     if (g.actions <= 0) {
       // every other branch would push an action the player cannot take
@@ -912,8 +912,8 @@
     } else if (modo === 'luz' && lightable.length) {
       // name what the lamp would buy tonight, word by word: light only pays
       // on watered words, and a dry word can still be watered after the lamp
-      const feeds = lightable.filter(p => p.water > 0 && V.themeOf(p.word, g) === 'flame');
-      const faster = lightable.filter(p => p.water > 0 && V.themeOf(p.word, g) !== 'flame');
+      const feeds = lightable.filter(p => p.water > 0 && V.plantTheme(p, g) === 'flame');
+      const faster = lightable.filter(p => p.water > 0 && V.plantTheme(p, g) !== 'flame');
       const dryLit = lightable.filter(p => p.water <= 0);
       const partes = [];
       if (feeds.length) partes.push('«' + feeds.map(p => p.word).join('», «') + '» would feed on the light');
@@ -948,7 +948,7 @@
       msg = g.day === V.DAYS ? 'the pouch is empty. this is the last night. end the night →'
         : 'the pouch is empty — end the night; the wind brings new words.';
     } else if (g.forecast > 0 && needsShelter.length) {
-      const homebody = plants.find(p => !p.sheltered && V.frostDamage(g, p) === 0 && V.themeOf(p.word, g) === 'night');
+      const homebody = plants.find(p => !p.sheltered && V.frostDamage(g, p) === 0 && V.plantTheme(p, g) === 'night');
       msg = homebody
         ? 'frost tonight (force ' + g.forecast + '): «' + homebody.word + '» is at home in it — shelter the glowing words.'
         : 'frost tonight (force ' + g.forecast + '): press shelter, then click each glowing word.';
@@ -973,7 +973,7 @@
       msg = 'the open beds lie frozen from the frost — they thaw in a night or two. tend what grows, or end the night →';
     } else if (unwatered.length) {
       msg = 'press water, then click «' + unwatered[0].word + '» — a word only grows on watered nights' +
-        (V.themeOf(unwatered[0].word, g) === 'night' ? '; this night word does not need a lamp.' : ' (light makes it faster).') +
+        (V.plantTheme(unwatered[0], g) === 'night' ? '; this night word does not need a lamp.' : ' (light makes it faster).') +
         (g.forecast > 0 ? ' Careful: wet words freeze harder tonight (+1 bite) — shelter it after, or leave it dry.' : '');
     } else if (modo === 'plantar' && !g.pouch.length) {
       msg = g.day === V.DAYS ? 'the pouch is empty. tend what grows or end the night →'
@@ -999,7 +999,7 @@
     if (fManana > 0) {
       const mojada = plants.find(p => {
         if (p.water < 2) return false; // one night of growth drinks one: only a topped-up word stays wet
-        const mod = V.themeOf(p.word, g) === 'night' ? -1 : V.themeOf(p.word, g) === 'flame' ? 1 : 0;
+        const mod = V.plantTheme(p, g) === 'night' ? -1 : V.plantTheme(p, g) === 'flame' ? 1 : 0;
         return Math.max(0, fManana - p.traits.hardiness) + mod + 1 > 0;
       });
       if (mojada) msg += ' Tomorrow brings frost (force ' + fManana + '): «' + mojada.word + '» would still be wet at dusk — wet words freeze harder.';
@@ -1072,7 +1072,7 @@
       }
     } else if (modo === 'regar') {
       if (p && g.actions > 0) {
-        const cap = V.themeOf(p.word, g) === 'tide' ? 3 : 2;
+        const cap = V.plantTheme(p, g) === 'tide' ? 3 : 2;
         const thirstyNeighbor = [i - 1, i + 1].some(n => n >= 0 && n < V.BEDS && Math.floor(n / 3) === Math.floor(i / 3) && g.beds[n] && g.beds[n].water < 1);
         if (p.water < cap || thirstyNeighbor) {
           const row = Math.floor(i / 3);
@@ -1091,13 +1091,13 @@
       if (p && g.actions > 0) {
         const row = Math.floor(i / 3) * 3;
         const rowBeds = g.beds.slice(row, row + 3);
-        const helps = rowBeds.some(q => q && !q.lit && V.themeOf(q.word, g) !== 'night');
+        const helps = rowBeds.some(q => q && !q.lit && V.plantTheme(q, g) !== 'night');
         if (helps) {
           V.light(g, i); lamparaReciente = i;
           // say what the lamp actually bought, so a wasted lamp teaches
-          const gains = rowBeds.filter(q => q && q.lit && q.water > 0 && V.themeOf(q.word, g) !== 'night');
-          const fed = gains.filter(q => V.themeOf(q.word, g) === 'flame');
-          const sped = gains.filter(q => V.themeOf(q.word, g) !== 'flame');
+          const gains = rowBeds.filter(q => q && q.lit && q.water > 0 && V.plantTheme(q, g) !== 'night');
+          const fed = gains.filter(q => V.plantTheme(q, g) === 'flame');
+          const sped = gains.filter(q => V.plantTheme(q, g) !== 'flame');
           const partes = [];
           if (fed.length) partes.push('«' + fed.map(q => q.word).join('», «') + '» feeds on it');
           if (sped.length) partes.push('«' + sped.map(q => q.word).join('», «') + '» grows faster tonight');
@@ -1297,7 +1297,7 @@
     const keptWords = [...new Set(g.poem)];
     keptWords.forEach(w => {
       const flor = document.createElement('span');
-      flor.className = 'final-flor fam-' + V.familyOf(w) + (g.scarred[w] ? ' marcada' : '');
+      flor.className = 'final-flor fam-' + V.familyOf(w) + (g.bloomRecords.some(r => r.word === w && r.scarred) ? ' marcada' : '');
       flor.append(hoardFlower());
       const nombre = document.createElement('b');
       nombre.textContent = '«' + w + '»';
@@ -1317,7 +1317,7 @@
     if (keptWords.length || winterKept.length) {
       jardin.setAttribute('role', 'img');
       jardin.setAttribute('aria-label',
-        (keptWords.length ? 'the garden the thaw found: ' + keptWords.map(w => '«' + w + '»' + (g.scarred[w] ? ' (frost-marked)' : '')).join(', ') : 'nothing bloomed') +
+        (keptWords.length ? 'the garden the thaw found: ' + keptWords.map(w => '«' + w + '»' + (g.bloomRecords.some(r => r.word === w && r.scarred) ? ' (frost-marked)' : '')).join(', ') : 'nothing bloomed') +
         (winterKept.length ? ' — winter keeps ' + winterKept.map(w => '«' + w + '»').join(', ') : ''));
     } else {
       jardin.removeAttribute('role');
