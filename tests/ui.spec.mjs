@@ -570,6 +570,7 @@ test('the thaw poem rises verse by verse', async ({ page }) => {
   await expect(page.locator('#final-stats')).not.toContainText('1 words');
   // the hoard value is on the ending, and it agrees with the born count it names
   const st = await page.locator('#final-stats').textContent();
+  await expect(page.locator('#final-stats')).toHaveCSS('color', 'rgb(134, 181, 138)');
   const born = /\((\d+) grafted blooms?, counted triple\)/.exec(st);
   expect(st).toMatch(/hoard value \d+/);
   expect(Number(/hoard value (\d+)/.exec(st)[1])).toBe(1 + 2 * (born ? Number(born[1]) : 0));
