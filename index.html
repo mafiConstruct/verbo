@@ -306,7 +306,7 @@
     <div class="como">
       <p><b>1.</b> Click a glowing garden bed to plant the selected word — or pick another in your pouch first.</p>
       <p><b>2.</b> Water what you want to grow; a lamp speeds a whole row for one night, and fire words feed on it. When frost is forecast, shelter your words — night words don't mind it, and wet words freeze harder. The sky shows tonight and tomorrow: a word still wet when tomorrow's frost comes freezes harder too.</p>
-      <p><b>3.</b> After 14 nights, every word that bloomed becomes your poem.</p>
+      <p><b>3.</b> After 14 nights, every word that bloomed becomes your poem. A grafted word that blooms counts triple in the hoard that names your ending.</p>
     </div>
     <div class="fila">
       <input id="entrada-siembra" placeholder="seed code (optional)">
@@ -1255,7 +1255,7 @@
     if (e.subtitle) lines.push(e.subtitle);
     lines.push('', ...e.lines, '',
       'you survived ' + e.days + ' nights · ' + e.bloomed + ' words bloomed · ' +
-      e.lost + ' lost · ' + e.grafts + ' grafts · diversity ' + e.diversity + '/4',
+      e.lost + ' lost · ' + e.grafts + ' grafts · diversity ' + e.diversity + '/4 · hoard value ' + e.value,
       'seed: ' + e.code + ' — WORDHOARD');
     const text = lines.join('\n');
     // clipboard API first (needs permission inside an iframe), then the old-school
@@ -1319,7 +1319,8 @@
     const plural = (n, one, many) => n + ' ' + (n === 1 ? one : many);
     stats.textContent =
       'you survived ' + plural(e.days, 'night', 'nights') + ' · ' + plural(e.bloomed, 'word bloomed', 'words bloomed') + ' · ' +
-      plural(e.lost, 'lost', 'lost') + ' · ' + plural(e.grafts, 'graft', 'grafts') + ' · diversity ' + e.diversity + '/4';
+      plural(e.lost, 'lost', 'lost') + ' · ' + plural(e.grafts, 'graft', 'grafts') + ' · diversity ' + e.diversity + '/4' +
+      ' · hoard value ' + e.value + (e.born ? ' (' + e.born + ' born, counted triple)' : '');
     stats.append(document.createElement('br'), document.createTextNode('seed: ' + e.code));
     $('pantalla-final').classList.remove('escondido');
     $('app').inert = true;
