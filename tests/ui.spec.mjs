@@ -1288,3 +1288,26 @@ test('hoard keeps earlier plain salt at one after salt becomes a grafted name', 
   await expect(page.locator('#tesoro small')).toHaveText('2 blooms · 4 value');
   await page.screenshot({path:'/downloads/wh-salt-origin-fixture.png'});
 });
+
+for (const grafted of [false, true]) {
+  test('ending verse uses bloom origin rather than current name: ' + (grafted ? 'grafted' : 'plain'), async ({page}) => {
+    await page.goto('/index.html');
+    // Controlled ending fixture. Current name metadata deliberately contradicts the bloom.
+    await page.evaluate(grafted => {
+      const original=VERBO.newGame;
+      VERBO.newGame=code=>{
+        const state=original(code||'verse-origin-fixture');state.day=14;state.forecast=0;
+        state.poem=['salt'];state.bloomed=1;state.vigorous.salt=true;
+        state.parents.salt=grafted?['elm','owl']:['sap','silt'];
+        state.bloomRecords=[{word:'salt',grafted,parents:grafted?['sap','silt']:null}];
+        return state;
+      };
+    },grafted);
+    await page.click('#comenzar');await page.click('#noche');
+    if(grafted) await expect(page.locator('#final-poema')).toContainText('child of «sap» and «silt»');
+    else await expect(page.locator('#final-poema')).not.toContainText('child of');
+    await expect(page.locator('#final-poema')).not.toContainText('child of «elm» and «owl»');
+    await page.waitForTimeout(4000);
+    await page.screenshot({path:'/downloads/wh-verse-origin-'+(grafted?'grafted':'plain')+'-fixture.png'});
+  });
+}
