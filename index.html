@@ -159,6 +159,8 @@
   #bolsa .semilla.elegida { border-color: var(--bright); color: var(--bright); }
   #bolsa .semilla.vigorosa { border-style: double; border-color: var(--amber); }
   #bolsa .semilla.tarde { opacity: .38; }
+  #bolsa .semilla::after { content: ' ' attr(data-rasgos); font-size: 11px; color: #86b58a; letter-spacing: 0; }
+  #bolsa .semilla.elegida::after { color: var(--bright); }
   #pista { font-size: 12px; color: var(--dim); min-height: 30px; }
   #guia { font-size: 13px; color: var(--txt); line-height: 1.45; margin-bottom: 10px; padding-left: 8px; border-left: 2px solid var(--dim); }
   .como { text-align: left; font-size: 13px; line-height: 1.5; color: var(--txt); margin: 14px 0; }
@@ -264,7 +266,7 @@
     <div id="camas"></div>
     <div id="lateral">
       <div class="caja" id="bolsa">
-        <h3>seed pouch</h3>
+        <h3>seed pouch <span style="font-weight:normal;font-size:11px;color:#86b58a">(watered nights to bloom · thirst 0-2 · frost shield 0-3)</span></h3>
         <div id="semillas"></div>
         <div id="pista">choose a seed to know it.</div>
       </div>
@@ -745,6 +747,9 @@
       const tarde = !g.over && muyTarde(w); // the pouch shows at a glance what can no longer bloom
       s.className = 'semilla fam-' + V.familyOf(w) + (w === semillaElegida ? ' elegida' : '') + (g.vigorous[w] ? ' vigorosa' : '') + (tarde ? ' tarde' : '');
       s.textContent = w;
+      { const tr = V.traits(w), est = bloomEstimate(w);
+        s.dataset.rasgos = est.remaining + 'n \u00b7 thirst ' + tr.thirst + ' \u00b7 frost ' + tr.hardiness;
+        s.setAttribute('aria-label', w + ', blooms in about ' + est.remaining + ' watered nights, thirst ' + (tr.thirst === 0 ? 'none' : tr.thirst === 1 ? 'normal' : 'high') + ', resists frost ' + tr.hardiness + (g.vigorous[w] ? ', vigorous' : '') + (tarde ? ', too late to bloom' : '')); }
       s.onclick = () => { semillaElegida = w; modo = 'plantar'; pista(w); render(); };
       semillasEl.append(s);
     });
