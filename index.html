@@ -128,6 +128,10 @@
   // a dry word droops where the eye lands first — the plant itself, before
   // the player reads any chip: tilt plus desaturation, readable at a glance
   .cama.sedienta .planta { filter: saturate(.45) brightness(.85); transform: rotate(3deg); transform-origin: 50% 100%; }
+  // a word that has taken a hit but is not ailing yet reads as faded: the
+  // board says who is one bite worse off without opening any panel (opacity,
+  // not filter, so it composes with the thirst droop)
+  .cama.magullada .planta { opacity: .72; }
   /* frost is the antagonist: on frost nights the cold is on the garden itself */
   #camas.helada .cama::before {
     content: ''; position: absolute; inset: 0; border-radius: 4px;
@@ -629,6 +633,10 @@
         if (p.lit) d.classList.add('sunlit');
         if (p.health <= 2) d.classList.add('ailing');
         if (sedNoche) d.classList.add('sedienta');
+        // between healthy and ailing there was no read: a word that lost
+        // health without reaching the ailing threshold now fades a little
+        const maxSalud = (g.vigorous && g.vigorous[p.word]) ? 5 : 4;
+        if (p.health > 2 && p.health < maxSalud) d.classList.add('magullada');
         const w = document.createElement('div');
         w.className = 'palabra fam-' + p.traits.fam;
         w.textContent = p.word;
