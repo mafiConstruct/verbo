@@ -195,6 +195,45 @@ ok(endings['Silence'] === undefined || endings['Silence'] <= 10, 'silence is rar
   }
   ok(g.day > 1 && g.forecast === g.sky[g.day - 1], 'sky still authoritative after rng-consuming nights');
 }
+// 10. The frost that kills freezes the bed for two nights
+{
+  const g = V.newGame('freeze-test');
+  g.sky = g.sky.map(() => 0); g.sky[0] = 3; g.forecast = 3;
+  V.plantAt(g, 0, 'ember'); // flame, hardiness 0: takes 4 on a force-3 night
+  V.endDay(g);
+  ok(g.beds[0] === null && g.lost.includes('ember'), 'ember died on the force-3 night');
+  ok(g.frozenBeds[0] === 3, 'bed frozen through night 3, got ' + g.frozenBeds[0]);
+  const before = g.pouch.length;
+  const r = V.plantAt(g, 0, 'crow');
+  ok(r === false && g.beds[0] === null && g.pouch.length === before && g.actions === 3, 'planting in a frozen bed is refused without cost');
+  V.endDay(g); // night 2 -> 3: still frozen
+  ok(V.plantAt(g, 0, 'crow') === false && g.beds[0] === null, 'still frozen on night 3');
+  V.endDay(g); // night 3 -> 4: the thaw
+  const r2 = V.plantAt(g, 0, 'crow');
+  ok(r2 !== false && g.beds[0] && g.beds[0].word === 'crow', 'bed takes root again after the thaw');
+}
+{
+  // thirst does not freeze a bed
+  const g = V.newGame('thirst-nofreeze');
+  g.sky = g.sky.map(() => 0); g.forecast = 0;
+  V.plantAt(g, 0, 'marrow'); // thirst 1
+  let diedAt = 0;
+  while (!g.over && g.beds[0]) { V.endDay(g); if (!g.beds[0]) diedAt = g.day - 1; }
+  ok(diedAt > 0, 'marrow died of thirst on night ' + diedAt);
+  ok(Object.keys(g.frozenBeds).length === 0, 'a thirsty death leaves no frozen bed');
+}
+// 11. Graft refuses anything below stem stage, like the garden says
+{
+  const g = V.newGame('graft-bar');
+  g.sky = g.sky.map(() => 0); g.forecast = 0;
+  V.plantAt(g, 0, 'marrow'); V.plantAt(g, 1, 'crow');
+  g.beds[0].stage = 1; g.beds[1].stage = 1; // two sprouts
+  const r = V.graft(g, 0, 1);
+  ok(r === null && g.beds[0] && g.beds[1] && g.grafts === 0, 'sprouts cannot be grafted');
+  g.beds[0].stage = 2; g.beds[1].stage = 2; g.actions = 3;
+  const r2 = V.graft(g, 0, 1);
+  ok(r2 !== null && g.grafts === 1, 'two stems graft into a new word');
+}
 console.log(fails === 0 ? 'MEMORY OK' : 'MEMORY FAILURES: ' + fails);
 console.log(fails === 0 ? 'WEATHER OK' : 'WEATHER FAILURES: ' + fails);
 console.log(fails === 0 ? 'ALL OK' : fails + ' FAILURES');
