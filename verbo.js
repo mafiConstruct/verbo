@@ -86,12 +86,21 @@
   const BEDS = 9, DAYS = 14, STAGES = ['seed', 'sprout', 'stem', 'bud', 'bloom'];
   const ACTIONS_PER_DAY = 3;
 
-  function rollFrost(state) {
-    const d = state.day, r = state.rng();
+  // The sky is dealt with the game and never re-rolled: tonight's forecast is
+  // a fact, and tomorrow's can be shown honestly. Frost draws live on their own
+  // stream so showing the future never disturbs the world's other rolls.
+  function frostFor(d, r) {
     if (d <= 3)  return r < 0.40 ? 1 : 0;
     if (d <= 8)  return r < 0.65 ? (1 + Math.floor(r * 2)) : 0;
     if (d <= 12) return r < 0.45 ? 1 : 0;
     return r < 0.30 ? 1 : 0;
+  }
+  const SKY_SALT = 1586;
+  function dealSky(code) {
+    const r = mulberry32(hashStr(code + ':sky' + SKY_SALT));
+    const sky = [];
+    for (let d = 1; d <= DAYS; d++) sky.push(frostFor(d, r()));
+    return sky;
   }
 
   function newGame(seedCode) {
@@ -109,7 +118,8 @@
       log: [], over: false, ending: null,
       windStock: lex.concat(RARE.filter(w => !pouch.includes(w))),
     };
-    state.forecast = rollFrost(state);
+    state.sky = dealSky(code);
+    state.forecast = state.sky[0];
     return state;
   }
 
@@ -251,7 +261,7 @@
 
     state.day++;
     state.actions = ACTIONS_PER_DAY;
-    state.forecast = rollFrost(state);
+    state.forecast = state.day <= DAYS ? state.sky[state.day - 1] : 0;
 
     // the last night: planting or grafting now can never bloom,
     // so say so before the player spends their final actions on it
@@ -370,8 +380,8 @@
 
   return {
     newGame, endDay, plantAt, water, light, shelter, graft, finish, stageCost,
-    traits, blend, familyOf, themeOf, composePoem, aliveCount, rollFrost, frostDamage,
-    LEXICON, RARE, THEME_MAP, STAGES, BEDS, DAYS, ACTIONS_PER_DAY,
+    traits, blend, familyOf, themeOf, composePoem, aliveCount, frostDamage,
+    LEXICON, RARE, THEME_MAP, STAGES, BEDS, DAYS, ACTIONS_PER_DAY, frostFor, dealSky,
     mulberry32, hashStr,
   };
 });
