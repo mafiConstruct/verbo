@@ -132,7 +132,8 @@
   // board says who is one bite worse off without opening any panel (opacity,
   // not filter, so it composes with the thirst droop)
   .cama.magullada .planta { opacity: .72; }
-  .cama.florece { box-shadow: 0 0 0 2px #e8c872, 0 0 14px 2px rgba(232,200,114,.55); }
+  .cama.florece { border-color: #f4a7c8; box-shadow: 0 0 0 2px #f4a7c8, 0 0 16px 3px rgba(244,167,200,.6); }
+  .cama.florece .estado { color: #f9c6dc; font-weight: 600; }
   .cama.florece .planta { filter: brightness(1.15) saturate(1.2); }
   /* frost is the antagonist: on frost nights the cold is on the garden itself */
   #camas.helada .cama::before {
@@ -658,6 +659,7 @@
         if (p.water > 0) marcas.push('≈' + p.water);
         if (p.lit) marcas.push('◉');
         if (p.sheltered) marcas.push('sheltered');
+        if (florNoche) marcas.push('✿ blooms tonight');
         st.textContent = marcas.join(' · ');
         const av = document.createElement('div');
         av.className = 'aviso-helada' + (mordidaNoche > 0 && mordidaNoche >= p.health ? ' mortal' : '');
