@@ -545,8 +545,16 @@
       // the dry side of the same decision: water is scarce, so the garden says
       // who pays for going without tonight (the engine counts age at dusk)
       const sedNoche = !!p && p.water === 0 && p.traits.thirst > 0 && p.age >= 1;
+      // with the lamp armed, each word says what the light would buy it
+      // tonight: light only pays on watered words (flame words feast), and a
+      // dry word can still be watered after the lamp — the fact, not a nudge
+      const luzInfo = (modo === 'luz' && p && !p.lit && V.themeOf(p.word, g) !== 'night')
+        ? (p.water > 0
+            ? (V.themeOf(p.word, g) === 'flame' ? ', would feed on the light tonight' : ', would grow faster under the light tonight')
+            : ', dry — the light pays only if it is watered tonight too')
+        : '';
       const mordida = !!p && !!g.scarred[p.word];
-      d.setAttribute('aria-label', 'bed ' + (i + 1) + (p ? ', ' + p.word + ', ' + V.STAGES[Math.min(p.stage, 3)] + ', health ' + p.health + ', water ' + p.water + (p.lit ? ', lit' : ', unlit') + (p.sheltered ? ', sheltered' : ', unsheltered') + (mordida ? ', frost-bitten' : '') + (p && amenazaHelada ? (p.sheltered ? ', frost held off by the shelter' : (mordidaNoche >= p.health ? ', the frost tonight would kill it (−' + mordidaNoche + ')' : ', frost threatens it tonight (−' + mordidaNoche + ')') + (p.water > 0 ? ' and the water on it is freezing' : '')) : '') + (sedNoche ? ', will go thirsty tonight' : '') + (injertoSel.includes(i) ? ', chosen for the graft' : '') : bloomEchoes[i] ? ', empty — «' + bloomEchoes[i] + '» bloomed here and is safe in the hoard' : witherEchoes[i] ? ', empty — «' + witherEchoes[i] + '» went dark here this night' + (camaCongelada(i) ? '; the bed lies frozen — it thaws ' + (g.frozenBeds[i] === g.day ? 'tomorrow night' : 'the night after') : '') : !bloomEchoes[i] && camaCongelada(i) ? ', empty — the bed lies frozen from the frost; it thaws ' + (g.frozenBeds[i] === g.day ? 'tomorrow night' : 'the night after') : graftEchoes[i] ? ', empty — «' + graftEchoes[i].a + '» and «' + graftEchoes[i].b + '» intertwined here into «' + graftEchoes[i].w + '»' : ', empty'));
+      d.setAttribute('aria-label', 'bed ' + (i + 1) + (p ? ', ' + p.word + ', ' + V.STAGES[Math.min(p.stage, 3)] + ', health ' + p.health + ', water ' + p.water + (p.lit ? ', lit' : ', unlit') + (p.sheltered ? ', sheltered' : ', unsheltered') + (mordida ? ', frost-bitten' : '') + (p && amenazaHelada ? (p.sheltered ? ', frost held off by the shelter' : (mordidaNoche >= p.health ? ', the frost tonight would kill it (−' + mordidaNoche + ')' : ', frost threatens it tonight (−' + mordidaNoche + ')') + (p.water > 0 ? ' and the water on it is freezing' : '')) : '') + (sedNoche ? ', will go thirsty tonight' : '') + luzInfo + (injertoSel.includes(i) ? ', chosen for the graft' : '') : bloomEchoes[i] ? ', empty — «' + bloomEchoes[i] + '» bloomed here and is safe in the hoard' : witherEchoes[i] ? ', empty — «' + witherEchoes[i] + '» went dark here this night' + (camaCongelada(i) ? '; the bed lies frozen — it thaws ' + (g.frozenBeds[i] === g.day ? 'tomorrow night' : 'the night after') : '') : !bloomEchoes[i] && camaCongelada(i) ? ', empty — the bed lies frozen from the frost; it thaws ' + (g.frozenBeds[i] === g.day ? 'tomorrow night' : 'the night after') : graftEchoes[i] ? ', empty — «' + graftEchoes[i].a + '» and «' + graftEchoes[i].b + '» intertwined here into «' + graftEchoes[i].w + '»' : ', empty'));
       d.className = 'cama' + (injertoSel.includes(i) ? ' seleccionada' : '') + (esObjetivo(p, i) ? ' objetivo' : '') + (!p && camaCongelada(i) ? ' congelada' : '');
       if (p) {
         const pre = plantPicture(p, amenazaHelada, mordida);
@@ -786,7 +794,16 @@
     } else if (modo === 'regar' && unwatered.length) {
       msg = 'water armed — now click one of the glowing words; it grows tonight.';
     } else if (modo === 'luz' && lightable.length) {
-      msg = 'light armed — click a glowing word; its lamp covers the whole row for tonight. watered words grow faster, and fire words get the biggest boost.';
+      // name what the lamp would buy tonight, word by word: light only pays
+      // on watered words, and a dry word can still be watered after the lamp
+      const feeds = lightable.filter(p => p.water > 0 && V.themeOf(p.word, g) === 'flame');
+      const faster = lightable.filter(p => p.water > 0 && V.themeOf(p.word, g) !== 'flame');
+      const dryLit = lightable.filter(p => p.water <= 0);
+      const partes = [];
+      if (feeds.length) partes.push('«' + feeds.map(p => p.word).join('», «') + '» would feed on the light');
+      if (faster.length) partes.push('«' + faster.map(p => p.word).join('», «') + '» would grow faster');
+      if (dryLit.length) partes.push('«' + dryLit.map(p => p.word).join('», «') + '» ' + (dryLit.length > 1 ? 'are' : 'is') + ' dry — the light pays only if watered tonight too');
+      msg = 'light armed — click a glowing word; its lamp covers the whole row tonight. ' + partes.join('; ') + '.';
     } else if (modo === 'luz' && plants.some(p => !p.lit)) {
       msg = 'only night words are unlit, and they shun the light — the lamp would not help them.';
     } else if (modo === 'abrigar' && needsShelter.length) {
@@ -933,8 +950,21 @@
     } else if (modo === 'luz') {
       if (p && g.actions > 0) {
         const row = Math.floor(i / 3) * 3;
-        const helps = g.beds.slice(row, row + 3).some(q => q && !q.lit && V.themeOf(q.word, g) !== 'night');
-        if (helps) { V.light(g, i); lamparaReciente = i; }
+        const rowBeds = g.beds.slice(row, row + 3);
+        const helps = rowBeds.some(q => q && !q.lit && V.themeOf(q.word, g) !== 'night');
+        if (helps) {
+          V.light(g, i); lamparaReciente = i;
+          // say what the lamp actually bought, so a wasted lamp teaches
+          const gains = rowBeds.filter(q => q && q.lit && q.water > 0 && V.themeOf(q.word, g) !== 'night');
+          const fed = gains.filter(q => V.themeOf(q.word, g) === 'flame');
+          const sped = gains.filter(q => V.themeOf(q.word, g) !== 'flame');
+          const partes = [];
+          if (fed.length) partes.push('«' + fed.map(q => q.word).join('», «') + '» feeds on it');
+          if (sped.length) partes.push('«' + sped.map(q => q.word).join('», «') + '» grows faster tonight');
+          notice = partes.length
+            ? 'the lamp covers the row tonight — ' + partes.join('; ') + '.'
+            : 'the lamp covers the row tonight — its words are dry for now; water them and the light pays off.';
+        }
         else notice = 'no word in this row needs more light tonight — no action spent.';
       }
     } else if (modo === 'abrigar') {
