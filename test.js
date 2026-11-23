@@ -267,6 +267,22 @@ ok(endings['Silence'] === undefined || endings['Silence'] <= 10, 'silence is rar
   g.parents.salt=['elm','owl']; V.finish(g);
   ok(g.ending.lines.some(line=>line.includes('child of «sap» and «silt»')), 'later name metadata cannot rewrite recorded bloom parents');
 }
+{
+  const g=V.newGame('theme-origin');g.pouch=['salt','sap','silt'];
+  V.plantAt(g,0,'salt');V.water(g,0);
+  V.plantAt(g,1,'sap');V.plantAt(g,2,'silt');g.beds[1].stage=2;g.beds[2].stage=2;g.actions=3;
+  V.graft(g,1,2); V.water(g,0);
+  ok(g.beds[0].water===3 && V.plantTheme(g.beds[0],g)==='tide','existing salt keeps tide water capacity after salt graft');
+  V.plantAt(g,1,'salt');ok(V.plantTheme(g.beds[1],g)==='leaf','new salt graft receives first parent leaf theme');
+  g.beds[0].stage=4;g.beds[0].health=20;g.forecast=0;V.endDay(g);
+  ok(g.bloomRecords[0].theme==='tide','bloom stores its plant theme');
+  // A second copy scars, survives that night, and then dies. The first bloom was never scarred.
+  const h=V.newGame('scar-origin');h.pouch=['salt'];V.plantAt(h,0,'salt');h.beds[0].stage=4;h.forecast=0;V.endDay(h);
+  V.plantAt(h,0,'salt');h.beds[0].health=2;h.forecast=1;V.endDay(h);h.forecast=1;V.endDay(h);V.finish(h);
+  ok(h.lost.includes('salt')&&!h.ending.lines.some(l=>l.includes('stood in the frost')),'unscarred bloom cannot inherit a later dead copy scar');
+  h.over=false;h.frozenBeds={};V.plantAt(h,0,'salt');h.beds[0].stage=4;h.beds[0].health=20;h.forecast=1;V.endDay(h);V.finish(h);
+  ok(h.bloomRecords.some(r=>r.scarred)&&h.ending.lines.some(l=>l.includes('stood in the frost')),'a genuinely scarred bloom earns its own verse');
+}
 console.log(fails === 0 ? 'MEMORY OK' : 'MEMORY FAILURES: ' + fails);
 console.log(fails === 0 ? 'WEATHER OK' : 'WEATHER FAILURES: ' + fails);
 console.log(fails === 0 ? 'ALL OK' : fails + ' FAILURES');
