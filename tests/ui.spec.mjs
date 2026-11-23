@@ -683,3 +683,17 @@ test('on a frost night the coach names the watering gamble', async ({ page }) =>
   await page.locator('#camas > .cama').first().click();
   await expect(page.locator('#camas > .cama').first()).toHaveAttribute('aria-label', /frost threatens it tonight/);
 });
+
+test('a wet word facing frost unsheltered shows frozen droplets', async ({ page }) => {
+  await begin(page, 'seed-2xk5l0'); // night 1: frost force 1
+  const bed = page.locator('#camas > .cama').first();
+  await bed.click(); // plant lantern
+  await page.click('[data-modo="regar"]');
+  await bed.click(); // water it into the frost night
+  await expect(bed.locator('svg.planta .gota-helada')).not.toHaveCount(0);
+  await expect(bed).toHaveAttribute('aria-label', /the water on it is freezing/);
+  await page.click('[data-modo="abrigar"]');
+  await bed.click(); // shelter holds the frost off: droplets thaw
+  await expect(bed.locator('svg.planta .gota-helada')).toHaveCount(0);
+  await expect(bed).toHaveAttribute('aria-label', /frost held off by the shelter/);
+});
