@@ -1254,8 +1254,8 @@
     const lines = [e.title];
     if (e.subtitle) lines.push(e.subtitle);
     lines.push('', ...e.lines, '',
-      'you survived ' + e.days + ' nights · ' + e.bloomed + ' words bloomed · ' +
-      e.lost + ' lost · ' + e.grafts + ' grafts · diversity ' + e.diversity + '/4 · hoard value ' + e.value,
+      'you survived ' + e.days + ' nights · ' + e.bloomed + (e.bloomed === 1 ? ' word bloomed · ' : ' words bloomed · ') +
+      e.lost + ' lost · ' + e.grafts + (e.grafts === 1 ? ' graft' : ' grafts') + ' · diversity ' + e.diversity + '/4 · hoard value ' + e.value + (e.born ? ' (' + e.born + (e.born === 1 ? ' grafted bloom, counted triple)' : ' grafted blooms, counted triple)') : ''),
       'seed: ' + e.code + ' — WORDHOARD');
     const text = lines.join('\n');
     // clipboard API first (needs permission inside an iframe), then the old-school
@@ -1320,7 +1320,7 @@
     stats.textContent =
       'you survived ' + plural(e.days, 'night', 'nights') + ' · ' + plural(e.bloomed, 'word bloomed', 'words bloomed') + ' · ' +
       plural(e.lost, 'lost', 'lost') + ' · ' + plural(e.grafts, 'graft', 'grafts') + ' · diversity ' + e.diversity + '/4' +
-      ' · hoard value ' + e.value + (e.born ? ' (' + e.born + ' born, counted triple)' : '');
+      ' · hoard value ' + e.value + (e.born ? ' (' + e.born + (e.born === 1 ? ' grafted bloom, counted triple)' : ' grafted blooms, counted triple)') : '');
     stats.append(document.createElement('br'), document.createTextNode('seed: ' + e.code));
     $('pantalla-final').classList.remove('escondido');
     $('app').inert = true;
