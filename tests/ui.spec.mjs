@@ -1377,3 +1377,24 @@ test('grafting with only two actions says the child cannot be planted tonight',a
   await expect(page.locator('#semillas')).toContainText('lolt');
   await expect(page.locator('#acciones-numero')).toHaveText('0/3');
 });
+
+
+for(const progress of [2,6]){
+ test('last-night planted bramble advice respects remaining growth '+progress,async({page})=>{
+  await page.goto('/index.html');
+  // Controlled planted-word deadline fixture. Same word and night, different earned growth.
+  await page.evaluate(progress=>{const original=VERBO.newGame;VERBO.newGame=()=>{
+   const g=original('planted-deadline-fixture');g.pouch=['bramble'];VERBO.plantAt(g,0,'bramble');
+   g.day=14;g.forecast=0;g.beds[0].progress=progress;g.beds[0].stage=Math.floor(progress/2);g.actions=3;return g;
+  };},progress);
+  await page.click('#comenzar');
+  if(progress===2){
+   await expect(page.locator('#camas>.cama').first()).toContainText('too late to bloom');
+   await expect(page.locator('#guia')).toContainText('Water keeps them alive; it will not add a bloom');
+   await page.screenshot({path:'/downloads/wh-planted-too-late-fixture.png'});
+  }else{
+   await expect(page.locator('#camas>.cama').first()).not.toContainText('too late to bloom');
+   await expect(page.locator('#guia')).toContainText('press water');
+  }
+ });
+}
