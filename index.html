@@ -125,6 +125,9 @@
   @media (prefers-reduced-motion: reduce) { #camas.paso-noche, #camas.paso-noche-fria { animation: none; } }
   .cama.sunlit { background: radial-gradient(ellipse at 80% 5%, #a68c3444, transparent 80%), var(--panel); }
   .cama.ailing .planta { color: var(--hurt); }
+  // a dry word droops where the eye lands first — the plant itself, before
+  // the player reads any chip: tilt plus desaturation, readable at a glance
+  .cama.sedienta .planta { filter: saturate(.45) brightness(.85); transform: rotate(3deg); transform-origin: 50% 100%; }
   /* frost is the antagonist: on frost nights the cold is on the garden itself */
   #camas.helada .cama::before {
     content: ''; position: absolute; inset: 0; border-radius: 4px;
@@ -625,6 +628,7 @@
         if (p.water) d.classList.add('watered');
         if (p.lit) d.classList.add('sunlit');
         if (p.health <= 2) d.classList.add('ailing');
+        if (sedNoche) d.classList.add('sedienta');
         const w = document.createElement('div');
         w.className = 'palabra fam-' + p.traits.fam;
         w.textContent = p.word;
