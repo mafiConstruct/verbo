@@ -1167,3 +1167,28 @@ test('a watered word one night from blooming glows and says so, then blooms', as
   await page.click('#noche');
   await expect(bed).not.toHaveClass(/florece/);
 });
+
+test('a word the frost would kill tonight does not claim it will bloom', async ({ page }) => {
+  await page.goto('/index.html');
+  await page.evaluate(() => {
+    const original = VERBO.newGame;
+    VERBO.newGame = code => {
+      const state = original(code || 'hoardcheck');
+      state.pouch = ['ash']; state.forecast = 0; state.sky = state.sky.map((_, i) => (i === 0 ? 0 : 9));
+      return state;
+    };
+  });
+  await page.click('#comenzar');
+  const bed = page.locator('#camas > .cama').first();
+  await bed.click();
+  await page.click('button[data-modo="regar"]');
+  await bed.click();
+  await page.click('button[data-modo="luz"]');
+  await bed.click();
+  await page.click('#noche');
+  await page.click('button[data-modo="regar"]');
+  await bed.click();
+  await expect(bed.locator('.aviso-helada')).toHaveClass(/mortal/);
+  await expect(bed).not.toHaveClass(/florece/);
+  await expect(bed.locator('.estado')).not.toContainText('blooms tonight');
+});
