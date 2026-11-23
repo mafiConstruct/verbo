@@ -90,10 +90,32 @@ ok(endings['Silence'] === undefined || endings['Silence'] <= 10, 'silence is rar
   V.plantAt(g, 0, 'snow');   // night theme
   V.plantAt(g, 1, 'ember');  // flame theme
   g.actions = 3; g.forecast = 1;
+  // frostDamage predicts the night exactly, so the UI can warn honestly
+  ok(V.frostDamage(g, g.beds[0]) === 0, 'snow takes 0 from frost 1');
+  ok(V.frostDamage(g, g.beds[1]) === 2, 'ember takes 2 from frost 1, got ' + V.frostDamage(g, g.beds[1]));
+  g.forecast = 0;
+  ok(V.frostDamage(g, g.beds[1]) === 0, 'no frost, no damage');
+  g.forecast = 1;
   V.endDay(g);
   const snow = g.beds[0], ember = g.beds[1];
   ok(snow && snow.health === 4, 'snow unharmed by frost 1, health ' + (snow && snow.health));
   ok(ember && ember.health === 2, 'ember takes extra frost damage, health ' + (ember && ember.health));
+}
+{
+  // wet words freeze harder: watering into a frost night is a gamble
+  const g = V.newGame('weather-wet');
+  V.plantAt(g, 0, 'fern');   // a word that is neither night nor flame — beds 0 and 3: different rows, no splash
+  V.plantAt(g, 3, 'fern');
+  g.actions = 3; g.forecast = 1;
+  const dry = V.frostDamage(g, g.beds[0]);
+  V.water(g, 3);             // wet the second one
+  const wet = V.frostDamage(g, g.beds[3]);
+  ok(wet === dry + 1, 'wet word takes one more bite: dry ' + dry + ', wet ' + wet);
+  const before = g.beds[3].health;
+  V.endDay(g);
+  ok(g.beds[3] && g.beds[3].health === before - wet, 'the night applies the predicted wet bite, health ' + (g.beds[3] && g.beds[3].health));
+  ok(g.beds[0] && g.beds[0].health === 4 - dry, 'the dry word takes only the plain bite, health ' + (g.beds[0] && g.beds[0].health));
+  ok(g.log.some(l => l.includes('froze harder')), 'the log names the wet bite');
 }
 {
   // tide words hold water (3 nights per watering); others get 2
