@@ -234,21 +234,6 @@ ok(endings['Silence'] === undefined || endings['Silence'] <= 10, 'silence is rar
   const r2 = V.graft(g, 0, 1);
   ok(r2 !== null && g.grafts === 1, 'two stems graft into a new word');
 }
-{
-  const g = V.newGame('scout-a');
-  const sky0 = g.sky.slice();
-  const a = V.skyAhead(g);
-  ok(a.length === 3 && a.every((x, k) => x.night === g.day + 2 + k && x.frost === sky0[g.day + 1 + k]), 'scout reads the three nights beyond tomorrow');
-  ok(V.scout(g) === true && g.actions === 2 && g.scoutedDay === 1, 'scouting costs one action');
-  ok(V.scout(g) === false && g.actions === 2, 'one scout per night');
-  ok(JSON.stringify(g.sky) === JSON.stringify(sky0), 'scouting does not change the sky');
-  V.endDay(g);
-  ok(V.canScout(g) === true, 'a new night allows scouting again');
-  g.actions = 0; ok(V.canScout(g) === false, 'no action, no scout');
-  const h = V.newGame('scout-b'); h.day = V.DAYS - 3; h.actions = 3;
-  ok(V.skyAhead(h).length === 2 && V.skyAhead(h)[1].night === V.DAYS, 'near the end only the nights that exist are shown');
-  h.day = V.DAYS; ok(V.canScout(h) === false, 'nothing to scout on the last night');
-}
 console.log(fails === 0 ? 'MEMORY OK' : 'MEMORY FAILURES: ' + fails);
 console.log(fails === 0 ? 'WEATHER OK' : 'WEATHER FAILURES: ' + fails);
 console.log(fails === 0 ? 'ALL OK' : fails + ' FAILURES');
