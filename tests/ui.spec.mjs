@@ -472,6 +472,8 @@ test('a bloom keeps its flower on the bed that night and the hoard shows flowers
   await expect(page.locator('#tesoro .tesoro-flor svg')).toHaveCount(1);
   await expect(page.locator('#tesoro .tesoro-flor').first()).toHaveClass(/fam-water/); // lantern: l → water family
   await expect(page.locator('#tesoro')).toContainText('«lantern»');
+  await expect(page.locator('#caja-tesoro h3')).toContainText('value 1');
+  await expect(page.locator('#tesoro small')).toContainText('1 value');
   await expect(page.locator('#tesoro')).toHaveAttribute('aria-label', /the hoard: «lantern»/);
   // replanting the same word in that bed retires the echo
   await page.locator('#semillas .semilla', { hasText: 'lantern' }).click();
@@ -1243,4 +1245,25 @@ test('each seed in the pouch shows its nights to bloom, thirst and frost shield 
   const nights = (await first.getAttribute('data-rasgos')).match(/^\d+/)[0];
   await first.click();
   await expect(page.locator('#pista')).toContainText('blooms in ~' + nights + ' watered nights');
+});
+
+
+test('hoard value adds repeated grafted and plain blooms without conflating names with blooms', async ({ page }) => {
+  await page.goto('/index.html');
+  // controlled fixture, not a played result
+  await page.evaluate(() => {
+    const original = VERBO.newGame;
+    VERBO.newGame = code => {
+      const state = original(code || 'hoard-value-fixture');
+      state.poem = ['lolt', 'ash', 'lolt']; state.bloomed = 3;
+      state.vigorous.lolt = true;
+      return state;
+    };
+  });
+  await page.click('#comenzar');
+  await expect(page.locator('#caja-tesoro h3')).toHaveText('the hoard · value 7');
+  await expect(page.locator('#tesoro .tesoro-flor')).toHaveCount(2);
+  await expect(page.locator('#tesoro .tesoro-flor').filter({hasText:'«lolt»'})).toContainText('2 blooms · 6 value');
+  await expect(page.locator('#tesoro .tesoro-flor').filter({hasText:'«ash»'})).toContainText('1 value');
+  await expect(page.locator('#tesoro')).toHaveAttribute('aria-label', /3 blooms — hoard value 7/);
 });
