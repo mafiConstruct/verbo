@@ -258,10 +258,14 @@ ok(endings['Silence'] === undefined || endings['Silence'] <= 10, 'silence is rar
   V.plantAt(g,1,'sap');V.plantAt(g,2,'silt');g.beds[1].stage=2;g.beds[2].stage=2;g.actions=3;
   ok(V.graft(g,1,2)==='salt','collision really produces existing salt');
   V.finish(g);ok(g.ending.value===1&&g.ending.born===0,'grafting salt cannot revalue its earlier bloom');
+  ok(!g.ending.lines.some(line=>line.includes('child of')||line.includes('never heard')), 'unbloomed graft cannot rewrite the earlier plain bloom verse');
   g.over=false;oldPlant.stage=4;oldPlant.health=20;g.forecast=0;V.endDay(g);
   ok(g.bloomRecords.length===2&&!g.bloomRecords[1].grafted,'plain plant retains origin after same-name graft');
   g.over=false;V.plantAt(g,1,'salt');g.beds[1].stage=4;g.beds[1].health=20;g.forecast=0;V.endDay(g);V.finish(g);
   ok(g.ending.value===5&&g.ending.born===1,'two earlier plain salt blooms plus new grafted salt are worth five');
+  ok(g.ending.lines.some(line=>line.includes('child of «sap» and «silt»')), 'grafted bloom carries the parents actually planted');
+  g.parents.salt=['elm','owl']; V.finish(g);
+  ok(g.ending.lines.some(line=>line.includes('child of «sap» and «silt»')), 'later name metadata cannot rewrite recorded bloom parents');
 }
 console.log(fails === 0 ? 'MEMORY OK' : 'MEMORY FAILURES: ' + fails);
 console.log(fails === 0 ? 'WEATHER OK' : 'WEATHER FAILURES: ' + fails);
