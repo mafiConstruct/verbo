@@ -114,7 +114,7 @@
       code, rng, day: 1, actions: ACTIONS_PER_DAY,
       beds: new Array(BEDS).fill(null),
       pouch, poem: [], grafts: 0, bloomed: 0, vigorous: {}, lost: [], bornThemes: {},
-      scarred: {}, parents: {},
+      scarred: {}, parents: {}, frozenBeds: {},
       log: [], over: false, ending: null,
       windStock: lex.concat(RARE.filter(w => !pouch.includes(w))),
     };
@@ -128,6 +128,10 @@
   function stageCost(t) { return Math.min(3, Math.max(1, t.growth - 2)); }
 
   function plantAt(state, bed, word) {
+    if (state.frozenBeds && state.frozenBeds[bed] >= state.day) {
+      say(state, 'the bed is still frozen; «' + word + '» would not take root.');
+      return false;
+    }
     const t = traits(word);
     const vig = !!state.vigorous[word];
     state.beds[bed] = { word, stage: 0, progress: vig ? 2 : 0, water: 0, health: vig ? 5 : 4, age: 0, dry: 0, lit: false, sheltered: false, traits: t };
@@ -158,6 +162,9 @@
 
   function graft(state, bedA, bedB) {
     const A = state.beds[bedA], B = state.beds[bedB];
+    if (!A || !B) return null;
+    // same bar the garden shows: only grown stems intertwine
+    if (A.stage < 2 || B.stage < 2) { say(state, 'graft needs two grown words (bigger stems); keep tending these.'); return null; }
     const w = blend(A.word, B.word);
     state.beds[bedA] = null; state.beds[bedB] = null;
     state.pouch.push(w);
@@ -219,11 +226,12 @@
         say(state, tag(p, i) + ' went thirsty (−1 health).');
       } else if (p.water > 0) { p.water--; p.dry = 0; }
       // frost: night words are at home in it; fire words suffer
+      let frostTookIt = false;
       if (frost > 0 && !p.sheltered) {
         const th = themeOf(p.word, state);
         const base = Math.max(0, frost - p.traits.hardiness);
         const dmg = frostDamage(state, p);
-        if (dmg > 0) { p.health -= dmg; say(state, 'the frost hit ' + tag(p, i) + ' (−' + dmg + ')' + (p.wetAtDusk ? ' — wet, it froze harder.' : '.')); if (p.health > 0) state.scarred[p.word] = true; }
+        if (dmg > 0) { p.health -= dmg; say(state, 'the frost hit ' + tag(p, i) + ' (−' + dmg + ')' + (p.wetAtDusk ? ' — wet, it froze harder.' : '.')); if (p.health > 0) state.scarred[p.word] = true; else frostTookIt = true; }
         else if (th === 'night' && base > 0) say(state, tag(p, i) + ' is at home in the frost.');
       }
       // death
@@ -231,6 +239,12 @@
         say(state, tag(p, i) + ' went dark.');
         state.lost.push(p.word);
         state.beds[i] = null;
+        // the frost does not only take the word: its bed lies frozen all of
+        // the next night, and nothing takes root there until it thaws
+        if (frostTookIt) {
+          state.frozenBeds[i] = state.day + 2;
+          say(state, 'the bed lies frozen; nothing will take root there for two nights.');
+        }
         continue;
       }
       p.lit = false; p.sheltered = false;
