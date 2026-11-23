@@ -661,3 +661,15 @@ test('a word the frost bites carries the mark while it grows', async ({ page }) 
   await expect(bed).toHaveAttribute('aria-label', /frost-bitten/);
   await expect(bed.locator('svg.planta .cicatriz')).toBeVisible();
 });
+
+test('the title screen shows a word growing before any rules', async ({ page }) => {
+  await page.goto('/index.html');
+  const muestra = page.locator('#muestra-inicio .muestra');
+  await expect(muestra).toHaveCount(3);
+  await expect(muestra.locator('svg.planta')).toHaveCount(3);
+  await expect(muestra.first().locator('.muestra-word')).toHaveText('«ember»');
+  // the second is lit: a lamp sun hangs over it
+  await expect(muestra.nth(1).locator('svg.planta circle[fill="#e8c872"]')).toHaveCount(1);
+  // the third is in bloom: the amber petal is open
+  await expect(muestra.nth(2).locator('svg.planta path[fill="#e8c872"]')).toHaveCount(1);
+});
