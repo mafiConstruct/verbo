@@ -419,7 +419,7 @@ test('bed accessible names expose water and nightly care, including resets', asy
   await bed.click();
   await expect(bed).toHaveAccessibleName(/water 2, lit, unsheltered$/);
   await page.click('#noche');
-  await expect(bed).toHaveAccessibleName(/water 1, unlit, unsheltered$/);
+  await expect(bed).toHaveAccessibleName(/water 1, unlit, unsheltered(, will bloom tonight)?$/);
 });
 
 test('action buttons expose which tool is armed and reset to plant each night', async ({ page }) => {
@@ -1020,10 +1020,34 @@ test('a dry word that will go thirsty tonight says so, and watering lifts it', a
   await page.click('#noche'); // night 2: calm, kettle is now old enough to thirst
   await expect(bed.locator('.aviso-sed')).toHaveText('it will go thirsty tonight (−1)');
   await expect(bed).toHaveAttribute('aria-label', /will go thirsty tonight/);
+  await expect(bed).toHaveClass(/sedienta/); // the plant itself droops
   await page.click('[data-modo="regar"]');
   await bed.click(); // water it: the warning lifts
   await expect(bed.locator('.aviso-sed')).toHaveCount(0);
   await expect(bed).not.toHaveAttribute('aria-label', /will go thirsty tonight/);
+  await expect(bed).not.toHaveClass(/sedienta/);
+});
+
+test('a word that lost health without reaching ailing fades on the board', async ({ page }) => {
+  // declared fixture: force-1 frost on the first night — not a played run
+  await page.goto('/index.html');
+  await page.evaluate(() => {
+    const original = VERBO.newGame;
+    VERBO.newGame = code => {
+      const state = original('hoardcheck');
+      state.sky = state.sky.map(() => 0); state.sky[1] = 1;
+      state.pouch = ['crow', 'lantern'];
+      return state;
+    };
+  });
+  await page.click('#comenzar');
+  const bed = page.locator('#camas > .cama').first();
+  await page.locator('#semillas .semilla', { hasText: 'crow' }).click();
+  await bed.click(); // plant crow (thirst none, resists frost 0)
+  await page.click('#noche'); // night 1 is calm
+  await page.click('#noche'); // night 2 carries the force-1 frost: one bite, health 4 -> 3
+  await expect(bed).toHaveClass(/magullada/); // faded, not yet ailing
+  await expect(bed).not.toHaveClass(/ailing/);
 });
 
 test('a word without thirst never shows the thirsty warning', async ({ page }) => {
@@ -1034,6 +1058,7 @@ test('a word without thirst never shows the thirsty warning', async ({ page }) =
   await page.click('#noche');
   await expect(bed.locator('.aviso-sed')).toHaveCount(0);
   await expect(bed).not.toHaveAttribute('aria-label', /will go thirsty tonight/);
+  await expect(bed).not.toHaveClass(/sedienta/);
 });
 
 test('frost and thirst warnings stack on a word that faces both', async ({ page }) => {
@@ -1124,4 +1149,20 @@ test('a graft shows its child and its cost before committing, and lets you recon
   // and confirming grafts exactly the pair shown
   await page.click('button[data-modo="injertar"]');
   await expect(page.locator('#registro')).toContainText('you grafted «' + B + '» with «' + A + '»');
+});
+
+test('a watered word one night from blooming glows and says so, then blooms', async ({ page }) => {
+  await beginWithSeed(page, 'ash');
+  const bed = page.locator('#camas > .cama').first();
+  await bed.click();
+  await page.click('button[data-modo="regar"]');
+  await bed.click();
+  await expect(bed).not.toHaveClass(/florece/);
+  await page.click('button[data-modo="luz"]');
+  await bed.click();
+  await page.click('#noche');
+  await expect(bed).toHaveClass(/florece/);
+  await expect(bed).toHaveAccessibleName(/will bloom tonight/);
+  await page.click('#noche');
+  await expect(bed).not.toHaveClass(/florece/);
 });
