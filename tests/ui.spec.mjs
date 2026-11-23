@@ -905,3 +905,44 @@ test('a bed the frost kills on lies frozen for two nights, then takes root again
   await expect(bed1).not.toHaveClass(/congelada/);
   await expect(bed1).toHaveClass(/objetivo/);
 });
+
+test('a threatened word shows the bite coming, and watering deepens it', async ({ page }) => {
+  await begin(page, 'seed-2xk5l0'); // night 1: frost force 1
+  const bed = page.locator('#camas > .cama').first();
+  await bed.click(); // plant lantern (flame, no hardiness): the frost bites −2 dry
+  await expect(bed.locator('.aviso-helada')).toHaveText('the frost will bite tonight (−2)');
+  await expect(bed).toHaveAttribute('aria-label', /frost threatens it tonight \(−2\)/);
+  await page.click('[data-modo="regar"]');
+  await bed.click(); // water it into the frost: the bite deepens the moment you commit
+  await expect(bed.locator('.aviso-helada')).toHaveText('the frost will bite tonight (−3)');
+  await expect(bed).toHaveAttribute('aria-label', /frost threatens it tonight \(−3\)/);
+  await expect(bed).toHaveAttribute('aria-label', /the water on it is freezing/);
+});
+
+test('a word the frost would take tonight says so, and shelter lifts the sentence', async ({ page }) => {
+  // declared fixture: force-2 frost tonight, flame word — not a played run
+  await page.goto('/index.html');
+  await page.evaluate(() => {
+    const original = VERBO.newGame;
+    VERBO.newGame = code => {
+      const state = original('hoardcheck');
+      state.sky = state.sky.map(() => 0); state.sky[0] = 2; state.forecast = 2;
+      state.pouch = ['lantern', 'crow'];
+      return state;
+    };
+  });
+  await page.click('#comenzar');
+  const bed = page.locator('#camas > .cama').first();
+  await bed.click(); // plant lantern: force 2 + flame = −3 dry, it would live
+  await expect(bed.locator('.aviso-helada')).toHaveText('the frost will bite tonight (−3)');
+  await expect(bed.locator('.aviso-helada')).not.toHaveClass(/mortal/);
+  await page.click('[data-modo="regar"]');
+  await bed.click(); // wet: the bite deepens to −4 — its whole health
+  await expect(bed.locator('.aviso-helada')).toHaveText('the frost tonight would take it (−4)');
+  await expect(bed.locator('.aviso-helada')).toHaveClass(/mortal/);
+  await expect(bed).toHaveAttribute('aria-label', /the frost tonight would kill it \(−4\)/);
+  await page.click('[data-modo="abrigar"]');
+  await bed.click(); // the shelter lifts the sentence
+  await expect(bed.locator('.aviso-helada')).toHaveText('');
+  await expect(bed).toHaveAttribute('aria-label', /frost held off by the shelter/);
+});
