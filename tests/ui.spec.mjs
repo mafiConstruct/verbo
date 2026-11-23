@@ -568,6 +568,11 @@ test('the thaw poem rises verse by verse', async ({ page }) => {
   // one bloom reads as one word, not "1 words bloomed"
   await expect(page.locator('#final-stats')).toContainText('1 word bloomed');
   await expect(page.locator('#final-stats')).not.toContainText('1 words');
+  // the hoard value is on the ending, and it agrees with the born count it names
+  const st = await page.locator('#final-stats').textContent();
+  const born = /\((\d+) born, counted triple\)/.exec(st);
+  expect(st).toMatch(/hoard value \d+/);
+  expect(Number(/hoard value (\d+)/.exec(st)[1])).toBe(1 + 2 * (born ? Number(born[1]) : 0));
 });
 
 test('a bloomed word stands in flower in the thaw garden', async ({ page }) => {
