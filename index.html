@@ -553,8 +553,20 @@
             ? (V.themeOf(p.word, g) === 'flame' ? ', would feed on the light tonight' : ', would grow faster under the light tonight')
             : ', dry — the light pays only if it is watered tonight too')
         : '';
+      // with water armed, a dry word says who else its watering would wet:
+      // the row's neighbors catch a sip — free growth, or a deeper frost bite
+      const riegoInfo = (modo === 'regar' && p && p.water <= 0 && g.actions > 0)
+        ? (() => {
+            const row = Math.floor(i / 3);
+            const vec = [i - 1, i + 1].filter(n => n >= 0 && n < V.BEDS && Math.floor(n / 3) === row && g.beds[n] && g.beds[n].water < 1);
+            if (!vec.length) return '';
+            const nombres = vec.map(n => g.beds[n].word);
+            const amen = vec.filter(n => { const q = g.beds[n]; return !q.sheltered && g.forecast > 0 && V.frostDamage(g, q) > 0; });
+            return ', watering it would also dampen «' + nombres.join('», «') + '»' + (amen.length ? ' — wet, the frost would bite harder tonight' : '');
+          })()
+        : '';
       const mordida = !!p && !!g.scarred[p.word];
-      d.setAttribute('aria-label', 'bed ' + (i + 1) + (p ? ', ' + p.word + ', ' + V.STAGES[Math.min(p.stage, 3)] + ', health ' + p.health + ', water ' + p.water + (p.lit ? ', lit' : ', unlit') + (p.sheltered ? ', sheltered' : ', unsheltered') + (mordida ? ', frost-bitten' : '') + (p && amenazaHelada ? (p.sheltered ? ', frost held off by the shelter' : (mordidaNoche >= p.health ? ', the frost tonight would kill it (−' + mordidaNoche + ')' : ', frost threatens it tonight (−' + mordidaNoche + ')') + (p.water > 0 ? ' and the water on it is freezing' : '')) : '') + (sedNoche ? ', will go thirsty tonight' : '') + luzInfo + (injertoSel.includes(i) ? ', chosen for the graft' : '') : bloomEchoes[i] ? ', empty — «' + bloomEchoes[i] + '» bloomed here and is safe in the hoard' : witherEchoes[i] ? ', empty — «' + witherEchoes[i] + '» went dark here this night' + (camaCongelada(i) ? '; the bed lies frozen — it thaws ' + (g.frozenBeds[i] === g.day ? 'tomorrow night' : 'the night after') : '') : !bloomEchoes[i] && camaCongelada(i) ? ', empty — the bed lies frozen from the frost; it thaws ' + (g.frozenBeds[i] === g.day ? 'tomorrow night' : 'the night after') : graftEchoes[i] ? ', empty — «' + graftEchoes[i].a + '» and «' + graftEchoes[i].b + '» intertwined here into «' + graftEchoes[i].w + '»' : ', empty'));
+      d.setAttribute('aria-label', 'bed ' + (i + 1) + (p ? ', ' + p.word + ', ' + V.STAGES[Math.min(p.stage, 3)] + ', health ' + p.health + ', water ' + p.water + (p.lit ? ', lit' : ', unlit') + (p.sheltered ? ', sheltered' : ', unsheltered') + (mordida ? ', frost-bitten' : '') + (p && amenazaHelada ? (p.sheltered ? ', frost held off by the shelter' : (mordidaNoche >= p.health ? ', the frost tonight would kill it (−' + mordidaNoche + ')' : ', frost threatens it tonight (−' + mordidaNoche + ')') + (p.water > 0 ? ' and the water on it is freezing' : '')) : '') + (sedNoche ? ', will go thirsty tonight' : '') + luzInfo + riegoInfo + (injertoSel.includes(i) ? ', chosen for the graft' : '') : bloomEchoes[i] ? ', empty — «' + bloomEchoes[i] + '» bloomed here and is safe in the hoard' : witherEchoes[i] ? ', empty — «' + witherEchoes[i] + '» went dark here this night' + (camaCongelada(i) ? '; the bed lies frozen — it thaws ' + (g.frozenBeds[i] === g.day ? 'tomorrow night' : 'the night after') : '') : !bloomEchoes[i] && camaCongelada(i) ? ', empty — the bed lies frozen from the frost; it thaws ' + (g.frozenBeds[i] === g.day ? 'tomorrow night' : 'the night after') : graftEchoes[i] ? ', empty — «' + graftEchoes[i].a + '» and «' + graftEchoes[i].b + '» intertwined here into «' + graftEchoes[i].w + '»' : ', empty'));
       d.className = 'cama' + (injertoSel.includes(i) ? ' seleccionada' : '') + (esObjetivo(p, i) ? ' objetivo' : '') + (!p && camaCongelada(i) ? ' congelada' : '');
       if (p) {
         const pre = plantPicture(p, amenazaHelada, mordida);
@@ -793,6 +805,23 @@
       msg = 'out of actions — end the night →';
     } else if (modo === 'regar' && unwatered.length) {
       msg = 'water armed — now click one of the glowing words; it grows tonight.';
+      // row watering splashes the neighbors: name the hidden cost first — a
+      // frost-threatened neighbor catches the damp and freezes harder tonight
+      const mojados = [];
+      let comparte = false;
+      for (let i = 0; i < V.BEDS; i++) {
+        const p = g.beds[i];
+        if (!p || p.water > 0) continue;
+        for (const n of [i - 1, i + 1]) {
+          if (n < 0 || n >= V.BEDS || Math.floor(n / 3) !== Math.floor(i / 3)) continue;
+          const q = g.beds[n];
+          if (!q || q.water >= 1) continue;
+          comparte = true;
+          if (!q.sheltered && g.forecast > 0 && V.frostDamage(g, q) > 0 && !mojados.includes(q.word)) mojados.push(q.word);
+        }
+      }
+      if (mojados.length) msg += ' Careful: the damp would also reach «' + mojados.join('», «') + '» — wet, it would freeze harder tonight.';
+      else if (comparte) msg += ' Its row neighbors catch a sip of the damp for free.';
     } else if (modo === 'luz' && lightable.length) {
       // name what the lamp would buy tonight, word by word: light only pays
       // on watered words, and a dry word can still be watered after the lamp
@@ -836,7 +865,21 @@
       msg = homebody
         ? 'frost tonight (force ' + g.forecast + '): «' + homebody.word + '» is at home in it — shelter the glowing words.'
         : 'frost tonight (force ' + g.forecast + '): press shelter, then click each glowing word.';
-      if (unwatered.length) msg += ' Watering grows a word but wets it for the frost (+1 bite) — shelter it after, or leave it dry.';
+      if (unwatered.length) {
+        msg += ' Watering grows a word but wets it for the frost (+1 bite) — shelter it after, or leave it dry.';
+        // and the splash counts too: watering next to a threatened word wets it
+        const mojados = [];
+        for (let i = 0; i < V.BEDS; i++) {
+          const p = g.beds[i];
+          if (!p || p.water > 0) continue;
+          for (const n of [i - 1, i + 1]) {
+            if (n < 0 || n >= V.BEDS || Math.floor(n / 3) !== Math.floor(i / 3)) continue;
+            const q = g.beds[n];
+            if (q && q.water < 1 && !q.sheltered && V.frostDamage(g, q) > 0 && !mojados.includes(q.word)) mojados.push(q.word);
+          }
+        }
+        if (mojados.length) msg += ' Watering next to «' + mojados.join('», «') + '» wets it just the same.';
+      }
     } else if (g.forecast > 0 && plants.some(p => !p.sheltered)) {
       msg = 'frost tonight (force ' + g.forecast + '), but every word out there can take it — no shelter needed.';
     } else if (modo === 'plantar' && g.pouch.length && g.beds.some(b => !b) && !g.beds.some((b, idx) => !b && !camaCongelada(idx))) {
@@ -944,7 +987,17 @@
       if (p && g.actions > 0) {
         const cap = V.themeOf(p.word, g) === 'tide' ? 3 : 2;
         const thirstyNeighbor = [i - 1, i + 1].some(n => n >= 0 && n < V.BEDS && Math.floor(n / 3) === Math.floor(i / 3) && g.beds[n] && g.beds[n].water < 1);
-        if (p.water < cap || thirstyNeighbor) { V.water(g, i); gotaReciente = i; }
+        if (p.water < cap || thirstyNeighbor) {
+          const row = Math.floor(i / 3);
+          const salpicados = [i - 1, i + 1].filter(n => n >= 0 && n < V.BEDS && Math.floor(n / 3) === row && g.beds[n] && g.beds[n].water < 1);
+          V.water(g, i); gotaReciente = i;
+          // name the splash, so its cost and its gift are both learned
+          if (salpicados.length) {
+            const nombres = salpicados.map(n => g.beds[n].word);
+            const amen = salpicados.filter(n => { const q = g.beds[n]; return !q.sheltered && g.forecast > 0 && V.frostDamage(g, q) > 0; });
+            notice = 'the damp reaches «' + nombres.join('», «') + '»' + (amen.length ? ' — wet now, the frost bites harder tonight.' : '.');
+          }
+        }
         else notice = 'this word and its neighbors already have water — no action spent.';
       }
     } else if (modo === 'luz') {
