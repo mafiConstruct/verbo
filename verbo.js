@@ -361,8 +361,10 @@
       if (!ws.some(w => bloomedBorn(w))) return line;
       return ws.filter(w => !bloomedBorn(w)).concat(ws.filter(w => bloomedBorn(w))).join(', ');
     };
-    const lines = themed.map(bornLast).concat(rares);
-    if (hero) lines.push('«' + hero + '» stood in the frost.');
+    // quote every harvested word: the verse is a word your garden grew,
+    // and the quotes tie it to the flowers standing below
+    const lines = themed.map(bornLast).map(line => line.split(', ').map(w => '«' + w + '»').join(', ')).concat(rares.map(w => '«' + w + '»'));
+    if (hero) lines.push('«' + hero + '» stood in the frost and lived.');
     if (bornChild) lines.push('«' + bornChild + '», child of «' + bornRecord.parents[0] + '» and «' + bornRecord.parents[1] + '».');
     else if (words.some(w => bloomedBorn(w))) lines.push('one of these words was never heard before.');
     lines.push(CLOSERS[dominantFamily(state.poem)]);
