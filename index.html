@@ -209,6 +209,8 @@
   .overlay h1 { letter-spacing: 0.5em; color: var(--bright); font-size: 34px; margin: 0 0 4px; }
   .overlay h2 { color: var(--amber); font-weight: normal; font-size: 20px; margin: 0 0 18px; letter-spacing: 0.1em; }
   .overlay .sub { color: var(--dim); font-size: 13px; margin-bottom: 26px; letter-spacing: 0.2em; }
+  /* the key to the poem must be findable: brighter than a sub, quieter than a title */
+  .overlay #final-clave { color: var(--bright); opacity: .85; letter-spacing: 0.12em; }
   .overlay p.intro { line-height: 1.8; font-size: 15px; }
   .overlay .poema { font-size: 17px; line-height: 2.1; margin: 10px 0 22px; }
   .overlay .poema .verso { opacity: 0; animation: alzar-verso .8s ease-out forwards; }
@@ -350,6 +352,7 @@ body { align-items: flex-start; }
   <div class="tarjeta">
     <h2 id="final-titulo"></h2>
     <div class="sub" id="final-sub"></div>
+    <div class="sub" id="final-clave"></div>
     <div class="poema" id="final-poema"></div>
     <div id="final-jardin"></div>
     <div class="stats" id="final-stats"></div>
@@ -808,7 +811,7 @@ body { align-items: flex-start; }
         }).join('') + '<small>No graft cost. Keep tending both.</small></section>' +
         '<section><strong>GRAFT INTO «' + born + '»</strong><span class="graft-line">3 value / bloom<br>~' + blit + ' lit + watered night' + (blit === 1 ? '' : 's') + ' after planting' +
         '<meter min="0" max="' + (V.stageCost(bt) * 4) + '" value="2" aria-label="new graft growth head start"></meter></span>' +
-        '<small>Both parents go. Costs 2 actions, then 1 to plant. Progress bars show growth already earned. Estimates assume care. Frost may still kill.</small></section></div>' +
+        '<small>Both parents go. Costs 2 actions, then 1 to plant. Progress bars show growth already earned. Estimates assume care. Frost may still kill. The first word lends its head and its nature — swap the picks to grow the other child.</small></section></div>' +
         '<span class="graft-now">' + (g.actions === 3
           ? 'THIS NIGHT: graft + plant uses all 3 actions. The child starts dry: no growth tonight, and no action left for light or shelter.'
           : 'THIS NIGHT: graft uses your last 2 actions. The child stays safe in the pouch; you cannot plant it until tomorrow.') + '</span>';
@@ -1309,7 +1312,7 @@ body { align-items: flex-start; }
     if (e.subtitle) lines.push(e.subtitle);
     lines.push('', ...e.lines, '',
       'you survived ' + e.days + ' nights · ' + e.bloomed + (e.bloomed === 1 ? ' word bloomed · ' : ' words bloomed · ') +
-      e.lost + ' lost · ' + e.grafts + (e.grafts === 1 ? ' graft' : ' grafts') + ' · diversity ' + e.diversity + '/4 · hoard value ' + e.value + (e.born ? ' (' + e.born + (e.born === 1 ? ' grafted bloom, counted triple)' : ' grafted blooms, counted triple)') : ''),
+      e.lost + ' lost · ' + e.grafts + (e.grafts === 1 ? ' graft' : ' grafts') + ' · diversity ' + e.diversity + '/4 · hoard value ' + e.value + (e.born ? ' (' + e.born + (e.born === 1 ? ' grafted bloom, counted triple)' : ' grafted blooms, counted triple)') : '') + (e.value < 10 ? ' · the hoard sings at 10' : ''),
       'seed: ' + e.code + ' — WORDHOARD');
     const text = lines.join('\n');
     // clipboard API first (needs permission inside an iframe), then the old-school
@@ -1335,7 +1338,9 @@ body { align-items: flex-start; }
     const fs = $('final-sub');
     if (e.subtitle) { fs.textContent = e.subtitle; fs.style.display = ''; } else { fs.style.display = 'none'; }
     // the poem the winter earned rises verse by verse, not as a dumped page
-    $('final-poema').innerHTML = e.lines.map(l => '<div class="verso' + (/ stood in the frost\.?$/.test(l) ? ' verso-helada' : '') + '">' + l + '</div>').join('');
+    // the key to the poem, at the moment of payoff: these words are your harvest
+    $('final-clave').textContent = e.bloomed ? 'the harvest, read aloud: every verse is a word that bloomed in your garden.' : 'nothing bloomed in fourteen nights; this is all the thaw can read.';
+    $('final-poema').innerHTML = e.lines.map(l => '<div class="verso' + (/ stood in the frost/.test(l) ? ' verso-helada' : '') + '">' + l + '</div>').join('');
     [...$('final-poema').children].forEach((v, i) => { v.style.animationDelay = (i * 0.65) + 's'; });
     // the thaw garden: what bloomed stands in flower, what winter keeps lies withered
     const jardin = $('final-jardin');
@@ -1374,7 +1379,7 @@ body { align-items: flex-start; }
     stats.textContent =
       'you survived ' + plural(e.days, 'night', 'nights') + ' · ' + plural(e.bloomed, 'word bloomed', 'words bloomed') + ' · ' +
       plural(e.lost, 'lost', 'lost') + ' · ' + plural(e.grafts, 'graft', 'grafts') + ' · diversity ' + e.diversity + '/4' +
-      ' · hoard value ' + e.value + (e.born ? ' (' + e.born + (e.born === 1 ? ' grafted bloom, counted triple)' : ' grafted blooms, counted triple)') : '');
+      ' · hoard value ' + e.value + (e.born ? ' (' + e.born + (e.born === 1 ? ' grafted bloom, counted triple)' : ' grafted blooms, counted triple)') : '') + (e.value < 10 ? ' · the hoard sings at 10' : '');
     stats.append(document.createElement('br'), document.createTextNode('seed: ' + e.code));
     $('pantalla-final').classList.remove('escondido');
     $('app').inert = true;
